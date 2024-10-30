@@ -70,8 +70,12 @@ dependencies {
 
     implementation("dev.chrisbanes.haze:haze-jetpack-compose:0.4.1")
 
+    implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc09")
+
+
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+
 
 
 

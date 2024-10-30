@@ -1,57 +1,55 @@
 package com.example.notes
 
 
-
 import android.os.Bundle
-import android.provider.ContactsContract
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -60,12 +58,21 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.notes.ui.theme.EditNote
 import com.example.notes.ui.theme.NotesTheme
+import com.mohamedrejeb.richeditor.model.RichTextState
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import components.ButtonIcon
+import components.NoteCard
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import kotlinx.serialization.Serializable
-import java.util.Objects
-import kotlin.random.Random
+
+
+val localRichTextDescState = compositionLocalOf<RichTextState> {
+    error("No RichTextState provided")
+}
+
+//val localStyles = compositionLocalOf<MutableState<Style>> { error("No Style provided") }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,13 +86,22 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val navController = rememberNavController()
+
+
                 NavHost(navController = navController, startDestination = HomePage) {
                     composable<HomePage> {
-                        HomePage(navController,notes)
+
+                        HomePage(navController, notes)
                     }
                     composable<EditNote> {
                         val args = it.toRoute<EditNote>()
-                        EditNote(navController,notes,args.position)
+                        val richTextDescState =
+                            if (args.position == -1) rememberRichTextState() else notes[args.position].richTextDescState
+//                        val styles = if (args.position == -1) remember { mutableStateOf(Style()) } else notes[args.position].styles
+                        CompositionLocalProvider(localRichTextDescState provides richTextDescState) {
+                            EditNote(navController, notes, args.position)
+                        }
+
                     }
                 }
 
@@ -99,21 +115,15 @@ class MainActivity : ComponentActivity() {
 
 data class Note(
     var title: String = "",
-    var desc: String = ""
+    var richTextDescState: RichTextState,
+//    var styles: MutableState<Style>
 )
 
-
-
-
 @Composable
-fun HomePage( navController: NavController,notes: MutableList<Note>) {
-
-
-
-//    val notes = ArrayList<Note>()
-
+fun HomePage(navController: NavController, notes: MutableList<Note>) {
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+
 
         Box(
             modifier = Modifier
@@ -144,12 +154,11 @@ fun HomePage( navController: NavController,notes: MutableList<Note>) {
                     TopPart()
                 }
                 items(notes.size) { note ->
-                    NoteCard(note = notes[note],onClick = {
+                    NoteCard(note = notes[note], onClick = {
                         navController.navigate(EditNote(position = note))
                     })
 
                 }
-
 
             }
             Button(
@@ -173,10 +182,8 @@ fun HomePage( navController: NavController,notes: MutableList<Note>) {
                 )
             }
 
-
         }
     }
-
 }
 
 @Composable
@@ -218,13 +225,43 @@ fun TopPart() {
                 contentAlignment = Alignment.TopEnd
 
             ) {
+
+                var showSubMenu by remember { mutableStateOf(false) }
+
+
+                ButtonMoveExample(
+                    x = -100,
+                    painter = R.drawable.sortby_icon,
+                    showSubMenu = showSubMenu,
+                    setShowMenu = { newShowMenu ->
+                        showSubMenu = newShowMenu
+                    })
+
+                ButtonMoveExample(
+                    x = -70,
+                    y = 70,
+                    painter = R.drawable.select_icon,
+                    showSubMenu = showSubMenu,
+                    setShowMenu = { newShowMenu ->
+                        showSubMenu = newShowMenu
+                    })
+
+                ButtonMoveExample(
+                    y = 100,
+                    painter = R.drawable.search_icon,
+                    showSubMenu = showSubMenu,
+                    setShowMenu = { newShowMenu ->
+                        showSubMenu = newShowMenu
+                    })
+
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        showSubMenu = !showSubMenu
+                    },
                     colors = ButtonDefaults.buttonColors(Color(0xFF161616)),
                     contentPadding = PaddingValues(10.dp),
                     modifier = Modifier
-                        .width(50.dp)
-                        .height(50.dp)
+                        .size(50.dp)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.bento_menu),
@@ -232,14 +269,14 @@ fun TopPart() {
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+
+
             }
 
         }
-
         ScrollableRow(modifier = Modifier.height(100.dp))
     }
 }
-
 
 @Composable
 fun ScrollableRow(modifier: Modifier) {
@@ -270,53 +307,20 @@ fun ScrollableRow(modifier: Modifier) {
 }
 
 
-
-
-@Composable
-fun NoteCard(note: Note,modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 100.dp, max = 300.dp)
-            .background(
-                Color(0xFFECE3C1),
-                RoundedCornerShape(25.dp)
-            )
-            .wrapContentHeight()
-            .clickable { onClick() }
-    ) {
-
-        Text(text = note.title ,
-            modifier = Modifier
-                .padding(20.dp),
-            style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.Black),
-            maxLines = 2)
-
-//        Spacer(modifier = Modifier.height(10.dp))
-        Text(text = note.desc ,
-            style = TextStyle(fontSize = 14.sp, color = Color.Black),
-            modifier = Modifier
-                .padding(bottom = 20.dp, start = 20.dp, end = 20.dp),
-            maxLines = 9
-        )
-
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     NotesTheme {
 //        HomePage(navController = rememberNavController())
-        Box(modifier = Modifier.fillMaxSize()){
-            NoteCard(note = Note(),modifier = Modifier.fillMaxWidth(.5f))
+        Box(modifier = Modifier.fillMaxSize()) {
+            HomePage(navController = rememberNavController(), notes = remember {
+                mutableStateListOf<Note>()
+            })
         }
 
 
     }
 }
-
-
 
 @Serializable
 object HomePage
@@ -325,5 +329,38 @@ object HomePage
 data class EditNote(
     val position: Int = -1
 )
+
+
+@Composable
+fun ButtonMoveExample(
+    x: Int = 0,
+    y: Int = 0,
+    painter: Int,
+    showSubMenu: Boolean,
+    setShowMenu: (Boolean) -> Unit
+) {
+    val xOffset by animateDpAsState(
+        targetValue = if (showSubMenu) x.dp else 0.dp,
+        tween(durationMillis = 500)
+    )
+    val yOffset by animateDpAsState(
+        targetValue = if (showSubMenu) y.dp else 0.dp,
+        tween(durationMillis = 500)
+    )
+    val visibility by animateFloatAsState(
+        targetValue = if (showSubMenu) 1f else 0f,
+        tween(durationMillis = 500)
+    )
+    ButtonIcon(
+        painter = painter,
+        contentPadding = 10.dp,
+        modifier = Modifier
+            .size(60.dp)
+            .offset(x = xOffset, y = yOffset)
+            .alpha(visibility)
+    ) {
+        setShowMenu(!showSubMenu)
+    }
+}
 
 

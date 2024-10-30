@@ -3,83 +3,97 @@ package com.example.notes.ui.theme
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.*
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.notes.Note
 import com.example.notes.R
-import com.example.notes.TopPart
+import com.example.notes.localRichTextDescState
+import com.mohamedrejeb.richeditor.model.RichSpanStyle.Default.spanStyle
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
+import components.BottomOptions
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
-import kotlin.random.Random
+
+//data class Style(
+//    var isBold: Boolean = false,
+//    val isItalic: Boolean = false,
+//    val isUnderline: Boolean = false,
+//    var fontSize: TextUnit = 20.sp,
+//    val color: Color = Color.Black
+//)
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditNote(navController: NavController,notes: MutableList<Note>,position: Int=-1){
+fun EditNote(navController: NavController, notes: MutableList<Note>, position: Int = -1) {
 
-    val titleInitVal = if (position ==-1)  "" else notes[position].title
-    val descInitVal = if (position ==-1)  "" else notes[position].desc
+    val titleInitVal = if (position == -1) "" else notes[position].title
+//    var style = if (position == -1) Style() else notes[position].style
 
     var textFieldTitleState by remember {
 
         mutableStateOf(titleInitVal)
     }
-    var textFieldNoteState by remember {
-        mutableStateOf(descInitVal)
+
+
+    val state = localRichTextDescState.current
+
+    LaunchedEffect(key1 = Unit) {
+        if (state.currentSpanStyle.fontSize.value.isNaN()){
+            state.addSpanStyle(SpanStyle(fontSize = 20.sp))
+        }
+
+        if(state.currentSpanStyle.color.value.toInt() == 16){
+            state.addSpanStyle(SpanStyle(color = Color.Black))
+        }
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
+    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-//                .background(Color.Red)
                 .background(Color(0xFFECE3C1))
                 .padding(innerPadding)
                 .padding(5.dp)
@@ -89,16 +103,12 @@ fun EditNote(navController: NavController,notes: MutableList<Note>,position: Int
                 HazeState()
             }
 
-            var fontSize by remember {
-                mutableStateOf(20.sp)
-            }
 
             Box(
-
                 modifier = Modifier
                     .fillMaxSize()
                     .haze(
-                        hazeState,
+                        state = hazeState,
                         backgroundColor = Color(0xFFECE3C1),
                         tint = Color.Black.copy(alpha = .1f),
                         blurRadius = 10.dp,
@@ -107,66 +117,77 @@ fun EditNote(navController: NavController,notes: MutableList<Note>,position: Int
 
                 val scrollState = rememberScrollState()
 
-
-                Column(modifier = Modifier
-                    .fillMaxSize()
-//                    .padding(top = 100.dp)
-                    .verticalScroll(scrollState)
-                ){
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                ) {
 
                     TextField(
                         value = textFieldTitleState,
                         onValueChange = {
                             textFieldTitleState = it
                         },
-                        placeholder = { Text("Title", style = TextStyle( color = Color.Black.copy(alpha = .5f), fontSize = 30.sp,fontWeight = FontWeight.SemiBold)) },
+                        placeholder = {
+                            Text(
+                                "Title",
+                                style = TextStyle(
+                                    color = Color.Black.copy(alpha = .5f),
+                                    fontSize = 30.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor =  Color.Transparent,
-                            unfocusedIndicatorColor =Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
                         ),
 
                         modifier = Modifier.padding(top = 100.dp),
                         maxLines = 2,
-                        textStyle = TextStyle(color = Color.Black, fontSize = 30.sp,fontWeight = FontWeight.SemiBold)
-
-                    )
-
-//                    Spacer(modifier = Modifier.height(100.dp))
-                    TextField(
-                        value = textFieldNoteState,
-                        onValueChange = {
-                            textFieldNoteState = it
-                        },
-                        placeholder = { Text("Write your note here", style = TextStyle( color = Color.Black.copy(alpha = .5f), fontSize = 20.sp)) },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor =  Color.Transparent,
-                            unfocusedIndicatorColor =Color.Transparent,
-                        ),
-
-                        modifier = Modifier
-                            .wrapContentHeight()
-                            .fillMaxWidth(),
-                        textStyle = TextStyle(color = Color.Black,
-//                            fontSize = 20.sp,
-                            fontSize = fontSize
+                        textStyle = TextStyle(
+                            color = Color.Black,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
 
                     )
 
 
+                    RichTextEditor(
+                        state = state,
+                        placeholder = {
+
+                            Text(
+                                "Write your note here2",
+                                style = TextStyle(
+                                    color = Color.Black.copy(alpha = .5f),
+                                    fontSize = 20.sp
+                                )
+                            )
+                        },
+                        colors = RichTextEditorDefaults.richTextEditorColors(
+                            containerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .fillMaxWidth(),
+//                        textStyle = TextStyle(
+//                            color = Color.Black,
+//                            fontSize = 20.sp
+//                        )
+
+                    )
 
 
                 }
-
-
             }
             Button(
                 onClick = {
-//                    notes.add(Note(textFieldTitleState,textFieldNoteState))
                     navController.popBackStack()
 
                 },
@@ -186,98 +207,39 @@ fun EditNote(navController: NavController,notes: MutableList<Note>,position: Int
                 )
             }
 
-            Box(modifier = Modifier
-                .padding(bottom = 10.dp)
-                .wrapContentWidth()
-                .height(80.dp)
-                .align(Alignment.BottomCenter)
-//                .background(Color.White, shape = RoundedCornerShape(50.dp) )
-                .hazeChild(state = hazeState, shape = CircleShape)
-
-            ){
-
-                Row {
-//                    ButtonIcon(painter = R.drawable.fonts_icon)
-                    Button(
-                        onClick = {
-                                  fontSize = 30.sp
-
-
-
-                        },
-                        colors = ButtonDefaults.buttonColors(Color(0xFF161616)),
-                        contentPadding = PaddingValues(10.dp),
-                        modifier = Modifier
-                            .size(80.dp)
-                            .padding(5.dp)
-
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.fonts_icon),
-                            contentDescription = "Change Font Style",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(10.dp)
-                        )
-                    }
-                    ButtonIcon(painter = R.drawable.mic_ion)
-                    ButtonIcon(painter = R.drawable.add_photo_icon)
-                    ButtonIcon(painter = R.drawable.change_theme_icon)
-                }
-
-            }
+            BottomOptions(
+                hazeState,
+                modifier = Modifier.align(Alignment.BottomCenter),
+//                style = style,
+            )
 
 
         }
+
     }
 
     DisposableEffect(key1 = Unit) {
         onDispose {
-            if (position == -1){
-                notes.add(0,Note(textFieldTitleState,textFieldNoteState))
+            if (textFieldTitleState.isEmpty() && state.toText().isEmpty()) {
+                if (position != -1) {
+                    notes.removeAt(position)
+                }
+                return@onDispose
             }
-            else{
+            if (position == -1) {
+                notes.add(0, Note(textFieldTitleState, state))
+            } else {
                 notes[position].title = textFieldTitleState
-                notes[position].desc = textFieldNoteState
-//                Note(textFieldTitleState,textFieldNoteState)
+                notes[position].richTextDescState = state
             }
 
         }
     }
-
 
 }
 
 @Preview
 @Composable
-fun EditNotePreview(){
+fun EditNotePreview() {
     EditNote(navController = rememberNavController(), mutableListOf())
 }
-
-@Composable
-fun ButtonIcon(painter: Int){
-
-    Button(
-        onClick = {
-
-        },
-        colors = ButtonDefaults.buttonColors(Color(0xFF161616)),
-        contentPadding = PaddingValues(10.dp),
-        modifier = Modifier
-            .size(80.dp)
-            .padding(5.dp)
-
-    ) {
-        Image(
-            painter = painterResource(id = painter),
-            contentDescription = "Change Font Style",
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp)
-        )
-    }
-
-
-}
-
-
