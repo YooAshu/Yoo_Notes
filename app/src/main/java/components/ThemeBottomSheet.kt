@@ -1,6 +1,8 @@
 package components
 
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,19 +16,36 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.notes.localBgColor
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeChild
 
 @Composable
-fun ThemeBottomSheet(hazeState: HazeState) {
+fun ThemeBottomSheet() {
     val topItems = List(10) { "Item ${it + 1}" }
+
+    val colors = listOf(
+        Color(0xFFECE3C1),
+        Color(0xFFCC5500),
+        Color(0xFFC49B2C),
+        Color(0xFF556B2F),
+        Color(0xFFB04A42),
+        Color(0xFFD2B48C),
+        Color(0xFF4682B4),
+        Color(0xFF3B666A),
+        Color(0xFF8D8D8D),
+        Color(0xFFC5AFA4)
+    )
+
     Column(modifier = Modifier
         .fillMaxHeight()
 //        .hazeChild(hazeState)
@@ -39,21 +58,35 @@ fun ThemeBottomSheet(hazeState: HazeState) {
                 Text(text = topItems[it], modifier = Modifier.padding(10.dp),color = Color.White)
             }
         }
+
+        val bg = localBgColor.current
+
         LazyVerticalGrid(columns = GridCells.Fixed(4)) {
-            items(topItems.size) {
+
+            fun changeTheme(color: Color) {
+                bg.value = color
+            }
+
+            items(colors) {color->
                 Box(
                     modifier = Modifier
                         .aspectRatio(1f)
                         .padding(5.dp)
-                        .background(Color(0xFF272727), RoundedCornerShape(5.dp)),
+                        .background(color, RoundedCornerShape(5.dp))
+                        .clickable { changeTheme(color) },
                     contentAlignment = Alignment.Center
 
                 ) {
-                    Text(text = topItems[it], color = Color.White)
                 }
             }
         }
     }
 
 
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ThemeBottomSheetPreview() {
+    ThemeBottomSheet()
 }

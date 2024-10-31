@@ -2,6 +2,7 @@ package com.example.notes
 
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -72,7 +73,8 @@ val localRichTextDescState = compositionLocalOf<RichTextState> {
     error("No RichTextState provided")
 }
 
-//val localStyles = compositionLocalOf<MutableState<Style>> { error("No Style provided") }
+val localBgColor = compositionLocalOf<MutableState<Color>> { error("No Style provided") }
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,15 +92,25 @@ class MainActivity : ComponentActivity() {
 
                 NavHost(navController = navController, startDestination = HomePage) {
                     composable<HomePage> {
-
                         HomePage(navController, notes)
                     }
                     composable<EditNote> {
+
                         val args = it.toRoute<EditNote>()
                         val richTextDescState =
                             if (args.position == -1) rememberRichTextState() else notes[args.position].richTextDescState
-//                        val styles = if (args.position == -1) remember { mutableStateOf(Style()) } else notes[args.position].styles
-                        CompositionLocalProvider(localRichTextDescState provides richTextDescState) {
+
+                        val bgColor =
+                            if (args.position == -1) {
+                                remember {
+                                    mutableStateOf(Color(0xFFECE3C1))
+                                }
+                            } else notes[args.position].bg
+
+                        CompositionLocalProvider(
+                            localRichTextDescState provides richTextDescState,
+                            localBgColor provides bgColor
+                        ) {
                             EditNote(navController, notes, args.position)
                         }
 
@@ -116,7 +128,7 @@ class MainActivity : ComponentActivity() {
 data class Note(
     var title: String = "",
     var richTextDescState: RichTextState,
-//    var styles: MutableState<Style>
+    var bg: MutableState<Color>
 )
 
 @Composable

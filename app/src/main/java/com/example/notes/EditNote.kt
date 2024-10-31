@@ -24,6 +24,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +46,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.notes.Note
 import com.example.notes.R
+import com.example.notes.localBgColor
 import com.example.notes.localRichTextDescState
 import com.mohamedrejeb.richeditor.model.RichSpanStyle.Default.spanStyle
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
@@ -53,13 +56,6 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 
-//data class Style(
-//    var isBold: Boolean = false,
-//    val isItalic: Boolean = false,
-//    val isUnderline: Boolean = false,
-//    var fontSize: TextUnit = 20.sp,
-//    val color: Color = Color.Black
-//)
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +63,6 @@ import dev.chrisbanes.haze.hazeChild
 fun EditNote(navController: NavController, notes: MutableList<Note>, position: Int = -1) {
 
     val titleInitVal = if (position == -1) "" else notes[position].title
-//    var style = if (position == -1) Style() else notes[position].style
 
     var textFieldTitleState by remember {
 
@@ -76,6 +71,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
 
 
     val state = localRichTextDescState.current
+    val bg = localBgColor.current
 
     LaunchedEffect(key1 = Unit) {
         if (state.currentSpanStyle.fontSize.value.isNaN()){
@@ -85,6 +81,9 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
         if(state.currentSpanStyle.color.value.toInt() == 16){
             state.addSpanStyle(SpanStyle(color = Color.Black))
         }
+
+
+
     }
 
 
@@ -94,7 +93,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFECE3C1))
+                .background(bg.value)
                 .padding(innerPadding)
                 .padding(5.dp)
         )
@@ -109,7 +108,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
                     .fillMaxSize()
                     .haze(
                         state = hazeState,
-                        backgroundColor = Color(0xFFECE3C1),
+                        backgroundColor = bg.value,
                         tint = Color.Black.copy(alpha = .1f),
                         blurRadius = 10.dp,
                     ),
@@ -218,7 +217,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
 
     }
 
-    DisposableEffect(key1 = Unit) {
+    DisposableEffect(1) {
         onDispose {
             if (textFieldTitleState.isEmpty() && state.toText().isEmpty()) {
                 if (position != -1) {
@@ -227,10 +226,13 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
                 return@onDispose
             }
             if (position == -1) {
-                notes.add(0, Note(textFieldTitleState, state))
+                Log.d("bgfromdispose", bg.value.toString())
+                notes.add(0, Note(textFieldTitleState, state, bg = bg))
+
             } else {
                 notes[position].title = textFieldTitleState
                 notes[position].richTextDescState = state
+                notes[position].bg = bg
             }
 
         }

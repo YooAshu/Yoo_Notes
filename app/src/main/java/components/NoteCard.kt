@@ -25,7 +25,7 @@ fun NoteCard(note: Note, modifier: Modifier = Modifier, onClick: () -> Unit = {}
             .fillMaxWidth()
             .heightIn(min = 100.dp, max = 300.dp)
             .background(
-                Color(0xFFECE3C1),
+                note.bg.value,
                 RoundedCornerShape(15.dp)
             )
             .wrapContentHeight()

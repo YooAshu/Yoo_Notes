@@ -1,6 +1,7 @@
 package components
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -32,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.notes.R
 import dev.chrisbanes.haze.HazeState
@@ -70,13 +72,21 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier) {
     ) {
         Row {
 
+            val context = LocalContext.current
 
-            ButtonIcon(painter = R.drawable.fonts_icon, modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727), onClick = {
+
+            ButtonIcon(painter = R.drawable.fonts_icon, modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)){
                 fontSheetOpen = true
-            })
-            ButtonIcon(painter = R.drawable.mic_ion,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) { fontSheetOpen = true }
-            ButtonIcon(painter = R.drawable.add_photo_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) { themeSheetOpen = true }
-            ButtonIcon(painter = R.drawable.change_theme_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) { themeSheetOpen = true }
+            }
+            ButtonIcon(painter = R.drawable.mic_ion,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
+                Toast.makeText(context, "feature not added yet", Toast.LENGTH_SHORT).show()
+            }
+            ButtonIcon(painter = R.drawable.add_photo_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
+                Toast.makeText(context, "feature not added yet", Toast.LENGTH_SHORT).show()
+            }
+            ButtonIcon(painter = R.drawable.change_theme_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
+                themeSheetOpen = true
+            }
         }
 
 
@@ -86,7 +96,6 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier) {
     if (fontSheetOpen || themeSheetOpen) {
         ModalBottomSheet(
             modifier = Modifier.fillMaxHeight(.5f),
-            dragHandle =  {CustomDragHandle(hazeState) },
             containerColor = Color(0xFF1A1A1A),
             sheetState = fontSheetState,
             onDismissRequest = { fontSheetOpen = false ; themeSheetOpen = false},
@@ -96,7 +105,7 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier) {
                     fontSheetOpen -> FontBottomSheet(
 //                        hazeState = hazeState
                     )
-                    themeSheetOpen -> ThemeBottomSheet(hazeState = hazeState)
+                    themeSheetOpen -> ThemeBottomSheet()
                 }
             }
         )
