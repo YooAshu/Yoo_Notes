@@ -22,14 +22,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,17 +38,15 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.notes.localRichTextDescState
-import dev.chrisbanes.haze.HazeState
+import com.mohamedrejeb.richeditor.model.RichTextState
+import kotlin.math.ceil
 
 
-@Preview(showBackground = true)
+
 @Composable
 fun FontBottomSheet(
-//    hazeState: HazeState
+    state: RichTextState
 ) {
-    val state = localRichTextDescState.current
-//    val style = localTest.current
 
     LazyColumn(
         modifier = Modifier
@@ -124,8 +117,7 @@ fun FontBottomSheet(
                         },
                         modifier = Modifier.padding(start = 10.dp),
                     )
-//
-                    FontSizeChanger(modifier = Modifier.weight(1f))
+                    FontSizeChanger(modifier = Modifier.weight(1f), state = state)
                 }
             }
         }
@@ -178,6 +170,9 @@ fun FontBottomSheet(
                     modifier = Modifier
                         .size(30.dp)
                         .background(Color.Gray, shape = RoundedCornerShape(100))
+                        .clickable {
+                            Log.d("STATE",state.currentSpanStyle.toString())
+                        }
                 ) {
 
                 }
@@ -186,28 +181,44 @@ fun FontBottomSheet(
         // Remaining items in a grid
         item { // Adjust 10 to 30 as per your needs
             Column(modifier = Modifier.fillMaxSize()) {
-                val items = List(15) { "Item ${it + 1}" } // Sample items
                 // Create 5 rows
-                for (row in 0 until 5) {
+                val rows = ceil(fontsList.size/3.toDouble()).toInt()
+                Log.d("TAG", "FontBottomSheet: $rows")
+                for (row in 0 until rows) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         // Create 3 columns in each row
                         for (col in 0 until 3) {
                             // Calculate the index of the item
                             val index = row * 3 + col
                             // Only display the item if it exists
-                            if (index < items.size) {
+
+                            if (index < fontsList.size) {
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
                                         .padding(5.dp)
                                         .height(50.dp)
                                         .background(
-                                            Color(0xFF272727),
+                                            if(state.currentSpanStyle.fontFamily == fontsList[index].fontFamily){
+                                                Color.White
+                                            } else {
+                                                Color(0xFF272727)
+                                            },
                                             shape = RoundedCornerShape(10.dp)
-                                        ),
+                                        )
+                                        .clickable {
+                                            state.addSpanStyle(SpanStyle(fontFamily = fontsList[index].fontFamily))
+                                        }
+                                    ,
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = items[index], color = Color.White)
+                                    Text(text = fontsList[index].fontName,
+                                        color = if(state.currentSpanStyle.fontFamily == fontsList[index].fontFamily){
+                                            Color.Black
+                                        } else {
+                                            Color.White
+                                        },
+                                        fontFamily = fontsList[index].fontFamily)
                                 }
                             } else {
                                 // Empty box if no item exists
@@ -259,8 +270,7 @@ fun FontStyleButton(clicked: Boolean, textStyle: TextStyle, text: String, onCLic
 }
 
 @Composable
-fun FontSizeChanger(modifier: Modifier) {
-    val state = localRichTextDescState.current
+fun FontSizeChanger(modifier: Modifier,state: RichTextState) {
     Row(
         modifier = modifier
             .fillMaxHeight()

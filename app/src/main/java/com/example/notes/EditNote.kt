@@ -23,13 +23,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,58 +32,42 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.notes.Note
 import com.example.notes.R
-import com.example.notes.localBgColor
-import com.example.notes.localRichTextDescState
-import com.mohamedrejeb.richeditor.model.RichSpanStyle.Default.spanStyle
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import components.BottomOptions
+import components.DropDownList
+import components.listOfNotesList
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditNote(navController: NavController, notes: MutableList<Note>, position: Int = -1) {
+fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note, position: Int) {
 
-    val titleInitVal = if (position == -1) "" else notes[position].title
 
-    var textFieldTitleState by remember {
+    val bg = note.bg
+    val state = note.richTextDescState
 
-        mutableStateOf(titleInitVal)
+
+    if (state.currentSpanStyle.fontSize.value.isNaN()) {
+        state.addSpanStyle(SpanStyle(fontSize = 20.sp))
     }
 
-
-    val state = localRichTextDescState.current
-    val bg = localBgColor.current
-
-    LaunchedEffect(key1 = Unit) {
-        if (state.currentSpanStyle.fontSize.value.isNaN()){
-            state.addSpanStyle(SpanStyle(fontSize = 20.sp))
-        }
-
-        if(state.currentSpanStyle.color.value.toInt() == 16){
-            state.addSpanStyle(SpanStyle(color = Color.Black))
-        }
-
-
-
+    if (state.currentSpanStyle.color.value.toInt() == 16) {
+        state.addSpanStyle(SpanStyle(color = Color.Black))
     }
+
+    val selectedIndex = remember { mutableIntStateOf(0) }
 
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
 
         Box(
             modifier = Modifier
@@ -101,6 +80,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
             val hazeState = remember {
                 HazeState()
             }
+
 
 
             Box(
@@ -123,9 +103,9 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
                 ) {
 
                     TextField(
-                        value = textFieldTitleState,
+                        value = note.title.value,
                         onValueChange = {
-                            textFieldTitleState = it
+                            note.title.value = it
                         },
                         placeholder = {
                             Text(
@@ -163,7 +143,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
                                 "Write your note here2",
                                 style = TextStyle(
                                     color = Color.Black.copy(alpha = .5f),
-                                    fontSize = 20.sp
+                                    fontSize = 20.sp,
                                 )
                             )
                         },
@@ -175,12 +155,8 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
                         modifier = Modifier
                             .wrapContentHeight()
                             .fillMaxWidth(),
-//                        textStyle = TextStyle(
-//                            color = Color.Black,
-//                            fontSize = 20.sp
-//                        )
 
-                    )
+                        )
 
 
                 }
@@ -206,10 +182,17 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
                 )
             }
 
+
+            DropDownList(
+                modifier = Modifier.align(Alignment.TopEnd),
+                selectedIndex = selectedIndex
+            )
+
             BottomOptions(
                 hazeState,
                 modifier = Modifier.align(Alignment.BottomCenter),
-//                style = style,
+                state = note.richTextDescState,
+                bg = note.bg
             )
 
 
@@ -219,29 +202,38 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, position: I
 
     DisposableEffect(1) {
         onDispose {
-            if (textFieldTitleState.isEmpty() && state.toText().isEmpty()) {
-                if (position != -1) {
-                    notes.removeAt(position)
+            if (note.title.value.isNotEmpty() || state.toText().isNotEmpty()) {
+                if (position == -1) {
+                    notes.add(0, note)
+                    if (selectedIndex.intValue != 0) {
+                        listOfNotesList[selectedIndex.intValue].notesList.add(0, note)
+                    }
                 }
-                return@onDispose
-            }
-            if (position == -1) {
-                Log.d("bgfromdispose", bg.value.toString())
-                notes.add(0, Note(textFieldTitleState, state, bg = bg))
 
-            } else {
-                notes[position].title = textFieldTitleState
-                notes[position].richTextDescState = state
-                notes[position].bg = bg
             }
 
         }
     }
 
+//    DisposableEffect(1) {
+//        onDispose {
+//            if (note.title.value.isEmpty() && state.toText().isEmpty()) {
+//                if (position != -1) {
+//                    notes.removeAt(position)
+//                }
+//                return@onDispose
+//            }
+//            if (position == -1) {
+//                notes.add(0, note)
+//
+//            } else {
+//                note.title = textFieldTitleState
+//                note.richTextDescState = state
+//                note.bg = bg
+//            }
+//
+//        }
+//    }
+
 }
 
-@Preview
-@Composable
-fun EditNotePreview() {
-    EditNote(navController = rememberNavController(), mutableListOf())
-}

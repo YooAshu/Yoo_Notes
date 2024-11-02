@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,9 +26,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,9 +41,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,17 +71,13 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import components.ButtonIcon
 import components.NoteCard
+import components.NotesList
+import components.listOfNotesList
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import kotlinx.serialization.Serializable
 
-
-val localRichTextDescState = compositionLocalOf<RichTextState> {
-    error("No RichTextState provided")
-}
-
-val localBgColor = compositionLocalOf<MutableState<Color>> { error("No Style provided") }
 
 
 class MainActivity : ComponentActivity() {
@@ -83,20 +87,30 @@ class MainActivity : ComponentActivity() {
         setContent {
             NotesTheme {
 
-                val notes = remember {
-                    mutableStateListOf<Note>()
+//                val notes = remember {
+//                    mutableStateListOf<Note>()
+//                }
+                val listIndex = remember {
+                    mutableIntStateOf(0)
                 }
+
+                val notes = listOfNotesList[listIndex.intValue].notesList
 
                 val navController = rememberNavController()
 
-
                 NavHost(navController = navController, startDestination = HomePage) {
                     composable<HomePage> {
-                        HomePage(navController, notes)
+                        HomePage(navController, notes,listIndex)
                     }
                     composable<EditNote> {
 
                         val args = it.toRoute<EditNote>()
+
+                        val textFieldTitleState =
+                            if (args.position == -1) remember {
+                                mutableStateOf("")
+                            } else notes[args.position].title
+
                         val richTextDescState =
                             if (args.position == -1) rememberRichTextState() else notes[args.position].richTextDescState
 
@@ -107,16 +121,12 @@ class MainActivity : ComponentActivity() {
                                 }
                             } else notes[args.position].bg
 
-                        CompositionLocalProvider(
-                            localRichTextDescState provides richTextDescState,
-                            localBgColor provides bgColor
-                        ) {
-                            EditNote(navController, notes, args.position)
-                        }
+                        val note = Note(textFieldTitleState, richTextDescState, bgColor)
+
+                        EditNote(navController, notes, note,position = args.position)
 
                     }
                 }
-
 
             }
         }
@@ -126,16 +136,15 @@ class MainActivity : ComponentActivity() {
 }
 
 data class Note(
-    var title: String = "",
+    var title: MutableState<String>,
     var richTextDescState: RichTextState,
     var bg: MutableState<Color>
 )
 
 @Composable
-fun HomePage(navController: NavController, notes: MutableList<Note>) {
+fun HomePage(navController: NavController, notes: MutableList<Note>, listIndex: MutableIntState) {
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
 
         Box(
             modifier = Modifier
@@ -148,6 +157,9 @@ fun HomePage(navController: NavController, notes: MutableList<Note>) {
             val hazeState = remember {
                 HazeState()
             }
+//            val listIndex = remember {
+//                mutableIntStateOf(0)
+//            }
 
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
@@ -162,12 +174,14 @@ fun HomePage(navController: NavController, notes: MutableList<Note>) {
                         blurRadius = 30.dp,
                     ),
             ) {
+
                 item(span = StaggeredGridItemSpan.FullLine) {
-                    TopPart()
+                    TopPart(listIndex)
                 }
-                items(notes.size) { note ->
-                    NoteCard(note = notes[note], onClick = {
-                        navController.navigate(EditNote(position = note))
+
+                itemsIndexed(listOfNotesList[listIndex.intValue].notesList) { index,note ->
+                    NoteCard(note = note, onClick = {
+                        navController.navigate(EditNote(position = index))
                     })
 
                 }
@@ -175,6 +189,7 @@ fun HomePage(navController: NavController, notes: MutableList<Note>) {
             }
             Button(
                 onClick = {
+
                     navController.navigate(EditNote())
 
                 },
@@ -193,18 +208,17 @@ fun HomePage(navController: NavController, notes: MutableList<Note>) {
                     modifier = Modifier.fillMaxSize()
                 )
             }
-
         }
     }
 }
 
 @Composable
-fun TopPart() {
+fun TopPart(listIndex: MutableIntState) {
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(170.dp)
         ) {
 
             Box(
@@ -286,12 +300,12 @@ fun TopPart() {
             }
 
         }
-        ScrollableRow(modifier = Modifier.height(100.dp))
+        ScrollableRow(modifier = Modifier.height(100.dp),listIndex)
     }
 }
 
 @Composable
-fun ScrollableRow(modifier: Modifier) {
+fun ScrollableRow(modifier: Modifier, listIndex: MutableIntState) {
 
     LazyRow(
         modifier
@@ -300,15 +314,20 @@ fun ScrollableRow(modifier: Modifier) {
 
         ) {
 
-        items(5) { index ->
+
+        itemsIndexed(listOfNotesList) { index,listName ->
             Box(
                 modifier = Modifier
                     .padding(20.dp, 0.dp)
                     .border(1.dp, Color.White, CircleShape)
+                    .background(color =  if(index == listIndex.intValue) Color.White else Color.Transparent, shape = CircleShape)
                     .padding(20.dp, 5.dp)
+                    .clickable { listIndex.intValue = index }
 
             ) {
-                Text(text = "ashu", color = Color.White, fontSize = 24.sp)
+                Text(text = listName.listName,
+                    color = if(index == listIndex.intValue) Color.Black else Color.White,
+                    fontSize = 24.sp)
             }
 
         }
@@ -325,9 +344,7 @@ fun GreetingPreview() {
     NotesTheme {
 //        HomePage(navController = rememberNavController())
         Box(modifier = Modifier.fillMaxSize()) {
-            HomePage(navController = rememberNavController(), notes = remember {
-                mutableStateListOf<Note>()
-            })
+
         }
 
 

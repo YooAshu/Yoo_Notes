@@ -23,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,13 +37,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.notes.R
+import com.mohamedrejeb.richeditor.model.RichTextState
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeChild
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomOptions(hazeState: HazeState,modifier: Modifier) {
+fun BottomOptions(hazeState: HazeState,modifier: Modifier,state: RichTextState,bg: MutableState<Color>) {
 
 
     var fontSheetOpen by rememberSaveable {
@@ -51,17 +53,13 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier) {
     var themeSheetOpen by rememberSaveable {
         mutableStateOf(false)
     }
-    val visibility by animateFloatAsState(
-        targetValue = if (fontSheetOpen) 0f else 1f,
-        tween(durationMillis = 200)
-    )
+
     val yOffset by animateDpAsState(
         targetValue = if (fontSheetOpen || themeSheetOpen) 100.dp else 0.dp,
         tween(durationMillis = 100)
     )
     Box(
         modifier = modifier
-//            .alpha(visibility)
             .offset(x = 0.dp, y = yOffset)
             .padding(bottom = 10.dp)
             .wrapContentWidth()
@@ -78,7 +76,7 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier) {
             ButtonIcon(painter = R.drawable.fonts_icon, modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)){
                 fontSheetOpen = true
             }
-            ButtonIcon(painter = R.drawable.mic_ion,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
+            ButtonIcon(painter = R.drawable.drawicon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
                 Toast.makeText(context, "feature not added yet", Toast.LENGTH_SHORT).show()
             }
             ButtonIcon(painter = R.drawable.add_photo_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
@@ -99,13 +97,15 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier) {
             containerColor = Color(0xFF1A1A1A),
             sheetState = fontSheetState,
             onDismissRequest = { fontSheetOpen = false ; themeSheetOpen = false},
-//            scrimColor = Color.Transparent,
             content = {
                 when{
                     fontSheetOpen -> FontBottomSheet(
-//                        hazeState = hazeState
+                        state = state
                     )
-                    themeSheetOpen -> ThemeBottomSheet()
+                    themeSheetOpen -> ThemeBottomSheet(
+                        bg = bg
+
+                    )
                 }
             }
         )

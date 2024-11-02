@@ -32,7 +32,7 @@ fun NoteCard(note: Note, modifier: Modifier = Modifier, onClick: () -> Unit = {}
             .clickable { onClick() }
     ) {
 
-        Text(text = note.title ,
+        Text(text = note.title.value ,
             modifier = Modifier
                 .padding(horizontal = 20.dp, vertical = 10.dp),
             style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.Black),

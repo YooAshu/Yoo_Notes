@@ -22,7 +22,6 @@ fun ButtonIcon(painter: Int,modifier: Modifier,contentPadding: Dp = 20.dp,bgColo
         colors = ButtonDefaults.buttonColors(bgColor),
         contentPadding = PaddingValues(contentPadding),
         modifier = modifier
-//            .size(80.dp)
             .padding(5.dp)
 
     ) {
@@ -31,7 +30,6 @@ fun ButtonIcon(painter: Int,modifier: Modifier,contentPadding: Dp = 20.dp,bgColo
             contentDescription = "Change Font Style",
             modifier = Modifier
                 .fillMaxSize()
-//                .padding(10.dp)
         )
     }
 }
