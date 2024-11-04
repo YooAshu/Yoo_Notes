@@ -1,5 +1,6 @@
 package components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
+import com.example.notes.Note
 import com.example.notes.R
 
 @Composable
@@ -73,11 +75,12 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
 
                 listOfNotesList.forEachIndexed { index, notesList ->
                     DropdownMenuItem(
-                        text = { Text(notesList.listName) },
+                        text = { Text(notesList.listName,color = if(selectedIndex.intValue == index) Color.Black else Color.White) },
                         onClick = {
                             selectedIndex.intValue = index
                             isExpanded = false
-                        }
+                        },
+                        modifier = Modifier.background(if(selectedIndex.intValue == index) Color.White else Color.Black)
                     )
                 }
 

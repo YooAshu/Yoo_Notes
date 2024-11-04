@@ -26,12 +26,10 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
@@ -40,14 +38,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,7 +51,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -71,13 +64,12 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import components.ButtonIcon
 import components.NoteCard
-import components.NotesList
+import components.allNotes
 import components.listOfNotesList
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import kotlinx.serialization.Serializable
-
 
 
 class MainActivity : ComponentActivity() {
@@ -87,44 +79,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             NotesTheme {
 
-//                val notes = remember {
-//                    mutableStateListOf<Note>()
-//                }
                 val listIndex = remember {
                     mutableIntStateOf(0)
                 }
-
-                val notes = listOfNotesList[listIndex.intValue].notesList
-
                 val navController = rememberNavController()
 
                 NavHost(navController = navController, startDestination = HomePage) {
                     composable<HomePage> {
-                        HomePage(navController, notes,listIndex)
+                        HomePage(navController, listIndex)
                     }
                     composable<EditNote> {
 
                         val args = it.toRoute<EditNote>()
 
-                        val textFieldTitleState =
-                            if (args.position == -1) remember {
-                                mutableStateOf("")
-                            } else notes[args.position].title
-
-                        val richTextDescState =
-                            if (args.position == -1) rememberRichTextState() else notes[args.position].richTextDescState
-
-                        val bgColor =
-                            if (args.position == -1) {
-                                remember {
-                                    mutableStateOf(Color(0xFFECE3C1))
-                                }
-                            } else notes[args.position].bg
-
-                        val note = Note(textFieldTitleState, richTextDescState, bgColor)
-
-                        EditNote(navController, notes, note,position = args.position)
-
+                        EditNote(navController, listIndex.intValue, position = args.position)
                     }
                 }
 
@@ -138,11 +106,12 @@ class MainActivity : ComponentActivity() {
 data class Note(
     var title: MutableState<String>,
     var richTextDescState: RichTextState,
-    var bg: MutableState<Color>
+    var bg: MutableState<Color>,
+    var category: Int = 0
 )
 
 @Composable
-fun HomePage(navController: NavController, notes: MutableList<Note>, listIndex: MutableIntState) {
+fun HomePage(navController: NavController, listIndex: MutableIntState) {
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
@@ -157,10 +126,6 @@ fun HomePage(navController: NavController, notes: MutableList<Note>, listIndex: 
             val hazeState = remember {
                 HazeState()
             }
-//            val listIndex = remember {
-//                mutableIntStateOf(0)
-//            }
-
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -179,8 +144,16 @@ fun HomePage(navController: NavController, notes: MutableList<Note>, listIndex: 
                     TopPart(listIndex)
                 }
 
-                itemsIndexed(listOfNotesList[listIndex.intValue].notesList) { index,note ->
+                val notes =
+                    if (listIndex.intValue == 0) {
+                        allNotes
+                    } else {
+                        allNotes.filter { it.category == listIndex.intValue }
+                    }
+                itemsIndexed(notes) { index, note ->
+
                     NoteCard(note = note, onClick = {
+
                         navController.navigate(EditNote(position = index))
                     })
 
@@ -223,7 +196,6 @@ fun TopPart(listIndex: MutableIntState) {
 
             Box(
                 modifier = Modifier
-//                .fillMaxWidth(.7f)
                     .weight(.7f)
                     .fillMaxHeight()
 
@@ -300,7 +272,7 @@ fun TopPart(listIndex: MutableIntState) {
             }
 
         }
-        ScrollableRow(modifier = Modifier.height(100.dp),listIndex)
+        ScrollableRow(modifier = Modifier.height(100.dp), listIndex)
     }
 }
 
@@ -315,19 +287,26 @@ fun ScrollableRow(modifier: Modifier, listIndex: MutableIntState) {
         ) {
 
 
-        itemsIndexed(listOfNotesList) { index,listName ->
+        itemsIndexed(listOfNotesList) { index, listName ->
             Box(
                 modifier = Modifier
                     .padding(20.dp, 0.dp)
                     .border(1.dp, Color.White, CircleShape)
-                    .background(color =  if(index == listIndex.intValue) Color.White else Color.Transparent, shape = CircleShape)
+                    .background(
+                        color = if (index == listIndex.intValue) Color.White else Color.Transparent,
+                        shape = CircleShape
+                    )
                     .padding(20.dp, 5.dp)
-                    .clickable { listIndex.intValue = index }
+                    .clickable {
+                        listIndex.intValue = index
+                    }
 
             ) {
-                Text(text = listName.listName,
-                    color = if(index == listIndex.intValue) Color.Black else Color.White,
-                    fontSize = 24.sp)
+                Text(
+                    text = listName.listName,
+                    color = if (index == listIndex.intValue) Color.Black else Color.White,
+                    fontSize = 24.sp
+                )
             }
 
         }
@@ -356,7 +335,7 @@ object HomePage
 
 @Serializable
 data class EditNote(
-    val position: Int = -1
+    val position: Int = -1,
 )
 
 

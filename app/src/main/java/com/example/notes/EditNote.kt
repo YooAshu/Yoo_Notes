@@ -24,6 +24,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,11 +38,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.notes.Note
 import com.example.notes.R
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
 import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import components.BottomOptions
 import components.DropDownList
-import components.listOfNotesList
+import components.allNotes
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
@@ -49,22 +51,42 @@ import dev.chrisbanes.haze.hazeChild
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note, position: Int) {
+fun EditNote(navController: NavController, listIndex: Int, position: Int) {
 
+    val notes = if (listIndex == 0) {
+        allNotes
+    } else {
+        allNotes.filter { it.category == listIndex }
+    }
+    var allNotesPosition:Int=-1
+    if (position != -1) {
+        allNotesPosition = allNotes.indexOf(notes[position])
+    }
+    val textFieldTitleState =
+        if (position == -1) remember {
+            mutableStateOf("")
+        } else allNotes[allNotesPosition].title
 
-    val bg = note.bg
-    val state = note.richTextDescState
+    val richTextDescState =
+        if (position == -1) rememberRichTextState() else allNotes[allNotesPosition].richTextDescState
 
+    val bgColor =
+        if (position == -1) {
+            remember {
+                mutableStateOf(Color(0xFFECE3C1))
+            }
+        } else allNotes[allNotesPosition].bg
+    val category = if (position == -1) listIndex else allNotes[allNotesPosition].category
 
-    if (state.currentSpanStyle.fontSize.value.isNaN()) {
-        state.addSpanStyle(SpanStyle(fontSize = 20.sp))
+    if (richTextDescState.currentSpanStyle.fontSize.value.isNaN()) {
+        richTextDescState.addSpanStyle(SpanStyle(fontSize = 20.sp))
     }
 
-    if (state.currentSpanStyle.color.value.toInt() == 16) {
-        state.addSpanStyle(SpanStyle(color = Color.Black))
+    if (richTextDescState.currentSpanStyle.color.value.toInt() == 16) {
+        richTextDescState.addSpanStyle(SpanStyle(color = Color.Black))
     }
 
-    val selectedIndex = remember { mutableIntStateOf(0) }
+    val selectedIndex = remember { mutableIntStateOf(category) }
 
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -72,7 +94,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note,
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(bg.value)
+                .background(bgColor.value)
                 .padding(innerPadding)
                 .padding(5.dp)
         )
@@ -88,7 +110,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note,
                     .fillMaxSize()
                     .haze(
                         state = hazeState,
-                        backgroundColor = bg.value,
+                        backgroundColor = bgColor.value,
                         tint = Color.Black.copy(alpha = .1f),
                         blurRadius = 10.dp,
                     ),
@@ -103,9 +125,9 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note,
                 ) {
 
                     TextField(
-                        value = note.title.value,
+                        value = textFieldTitleState.value,
                         onValueChange = {
-                            note.title.value = it
+                            textFieldTitleState.value = it
                         },
                         placeholder = {
                             Text(
@@ -136,7 +158,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note,
 
 
                     RichTextEditor(
-                        state = state,
+                        state = richTextDescState,
                         placeholder = {
 
                             Text(
@@ -163,6 +185,7 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note,
             }
             Button(
                 onClick = {
+
                     navController.popBackStack()
 
                 },
@@ -191,8 +214,8 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note,
             BottomOptions(
                 hazeState,
                 modifier = Modifier.align(Alignment.BottomCenter),
-                state = note.richTextDescState,
-                bg = note.bg
+                state = richTextDescState,
+                bg = bgColor
             )
 
 
@@ -200,40 +223,26 @@ fun EditNote(navController: NavController, notes: MutableList<Note>, note: Note,
 
     }
 
+
     DisposableEffect(1) {
         onDispose {
-            if (note.title.value.isNotEmpty() || state.toText().isNotEmpty()) {
+            if (textFieldTitleState.value.isNotEmpty() || richTextDescState.toText().isNotEmpty()) {
                 if (position == -1) {
-                    notes.add(0, note)
-                    if (selectedIndex.intValue != 0) {
-                        listOfNotesList[selectedIndex.intValue].notesList.add(0, note)
-                    }
+                    val note = Note(
+                        textFieldTitleState,
+                        richTextDescState,
+                        bgColor,
+                        selectedIndex.intValue
+                    )
+                    allNotes.add(0, note)
                 }
-
+                else{
+                    allNotes[allNotesPosition].category = selectedIndex.intValue
+                }
             }
-
         }
     }
 
-//    DisposableEffect(1) {
-//        onDispose {
-//            if (note.title.value.isEmpty() && state.toText().isEmpty()) {
-//                if (position != -1) {
-//                    notes.removeAt(position)
-//                }
-//                return@onDispose
-//            }
-//            if (position == -1) {
-//                notes.add(0, note)
-//
-//            } else {
-//                note.title = textFieldTitleState
-//                note.richTextDescState = state
-//                note.bg = bg
-//            }
-//
-//        }
-//    }
 
 }
 
