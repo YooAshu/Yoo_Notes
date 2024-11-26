@@ -1,35 +1,29 @@
 package components
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
-import com.example.notes.Note
 import com.example.notes.R
 
 @Composable
@@ -39,6 +33,18 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
         mutableStateOf(false)
     }
 
+    var isDialogShown by remember { mutableStateOf(false) }
+
+    if (isDialogShown) {
+        AddCategoryDialog(
+            onDismiss = {
+                isDialogShown = false
+            }, onSubmit = {
+                isDialogShown = false
+            }
+        )
+    }
+
 
     Box(
         modifier = modifier.padding(vertical = 20.dp)
@@ -46,7 +52,7 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
         Row(
             modifier = Modifier
                 .width(150.dp)
-                .background(Color.Black, shape = RoundedCornerShape(10.dp))
+                .background(Color(0xFF272727), shape = RoundedCornerShape(5.dp))
                 .padding(horizontal = 10.dp, vertical = 5.dp)
                 .clickable {
                     isExpanded = !isExpanded
@@ -62,7 +68,7 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
         }
 
         MaterialTheme(
-            shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(10.dp))
+            shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(5.dp))
         ) {
 
             DropdownMenu(
@@ -70,7 +76,7 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
                 onDismissRequest = {
                     isExpanded = false
                 },
-                modifier = Modifier.width(150.dp).background(Color.Black)
+                modifier = Modifier.width(150.dp).background(Color(0xFF272727))
             ) {
 
                 listOfNotesList.forEachIndexed { index, notesList ->
@@ -80,19 +86,21 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
                             selectedIndex.intValue = index
                             isExpanded = false
                         },
-                        modifier = Modifier.background(if(selectedIndex.intValue == index) Color.White else Color.Black)
+                        modifier = Modifier.height(30.dp).background(if(selectedIndex.intValue == index) Color.White else Color.Transparent)
                     )
                 }
-
+                DropdownMenuItem(
+                    text = {Text("+ Add Category",color = Color.White)},
+                    onClick = {
+                        isDialogShown = true
+                    },
+                    modifier = Modifier.height(30.dp)
+                )
 
             }
 
         }
 
-
     }
 
-}
-
-class DropDown {
 }

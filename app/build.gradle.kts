@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.foundation.layout.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -69,8 +70,12 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation("dev.chrisbanes.haze:haze-jetpack-compose:0.4.1")
-
-    implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc09")
+    implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc10")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("com.github.skydoves:colorpicker-compose:1.1.2")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.3")
+    implementation ("io.getstream:sketchbook:1.0.4")
+    implementation  ("io.ak1:drawbox:1.0.3")
 
 
     implementation(libs.navigation.compose)

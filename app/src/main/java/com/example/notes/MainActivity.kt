@@ -1,8 +1,11 @@
 package com.example.notes
 
 
+import android.animation.ObjectAnimator
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.animation.OvershootInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -53,15 +56,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.animation.doOnEnd
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.example.notes.ui.theme.EditNote
 import com.example.notes.ui.theme.NotesTheme
 import com.mohamedrejeb.richeditor.model.RichTextState
-import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import components.AddCategoryDialog
 import components.ButtonIcon
 import components.NoteCard
 import components.allNotes
@@ -69,11 +73,37 @@ import components.listOfNotesList
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import io.ak1.drawbox.DrawBoxPayLoad
 import kotlinx.serialization.Serializable
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen().apply {
+            setOnExitAnimationListener { screen ->
+                val zoomX = ObjectAnimator.ofFloat(
+                    screen.iconView,
+                    "scaleX",
+                    0.4f,
+                    0.0f
+                )
+                zoomX.interpolator = OvershootInterpolator()
+                zoomX.duration = 500L
+                zoomX.doOnEnd { screen.remove() }
+                val zoomY = ObjectAnimator.ofFloat(
+                    screen.iconView,
+                    "scaleY",
+                    0.4f,
+                    0.0f
+                )
+                zoomY.interpolator = OvershootInterpolator()
+                zoomY.duration = 500L
+                zoomY.doOnEnd { screen.remove() }
+
+                zoomX.start()
+                zoomY.start()
+            }
+        }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -91,8 +121,12 @@ class MainActivity : ComponentActivity() {
                     composable<EditNote> {
 
                         val args = it.toRoute<EditNote>()
+                        Log.d("TAG", "onCreate: ${args.position}")
 
                         EditNote(navController, listIndex.intValue, position = args.position)
+                    }
+                    composable<DoodlePage> {
+//                        DoodleScreen(navController)
                     }
                 }
 
@@ -107,7 +141,11 @@ data class Note(
     var title: MutableState<String>,
     var richTextDescState: RichTextState,
     var bg: MutableState<Color>,
-    var category: Int = 0
+    var bgGradient: MutableState<List<Color>>,
+    var category: Int = 0,
+    var themesIndex: Int = 0,
+    var imageList: MutableState<List<Uri>>,
+    var doodlePath : MutableState<DrawBoxPayLoad>
 )
 
 @Composable
@@ -153,7 +191,6 @@ fun HomePage(navController: NavController, listIndex: MutableIntState) {
                 itemsIndexed(notes) { index, note ->
 
                     NoteCard(note = note, onClick = {
-
                         navController.navigate(EditNote(position = index))
                     })
 
@@ -279,18 +316,31 @@ fun TopPart(listIndex: MutableIntState) {
 @Composable
 fun ScrollableRow(modifier: Modifier, listIndex: MutableIntState) {
 
+    var isDialogShown by remember { mutableStateOf(false) }
+
+    if (isDialogShown) {
+        AddCategoryDialog(
+            onDismiss = {
+                isDialogShown = false
+            }, onSubmit = {
+                isDialogShown = false
+            }
+        )
+    }
+
     LazyRow(
         modifier
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
 
-        ) {
+        )
+    {
 
 
         itemsIndexed(listOfNotesList) { index, listName ->
             Box(
                 modifier = Modifier
-                    .padding(20.dp, 0.dp)
+                    .padding(10.dp, 0.dp)
                     .border(1.dp, Color.White, CircleShape)
                     .background(
                         color = if (index == listIndex.intValue) Color.White else Color.Transparent,
@@ -302,6 +352,7 @@ fun ScrollableRow(modifier: Modifier, listIndex: MutableIntState) {
                     }
 
             ) {
+
                 Text(
                     text = listName.listName,
                     color = if (index == listIndex.intValue) Color.Black else Color.White,
@@ -309,6 +360,29 @@ fun ScrollableRow(modifier: Modifier, listIndex: MutableIntState) {
                 )
             }
 
+        }
+
+        item() {
+            Box(
+                modifier = Modifier
+                    .padding(10.dp, 0.dp)
+                    .border(1.dp, Color.White, CircleShape)
+                    .background(
+                        color = Color.Transparent,
+                        shape = CircleShape
+                    )
+                    .padding(20.dp, 5.dp)
+                    .clickable {
+                        isDialogShown = true
+                    }
+
+            ) {
+                Text(
+                    text = "+ Add",
+                    color = Color.White,
+                    fontSize = 24.sp
+                )
+            }
         }
 
 
@@ -332,6 +406,9 @@ fun GreetingPreview() {
 
 @Serializable
 object HomePage
+
+@Serializable
+object DoodlePage
 
 @Serializable
 data class EditNote(

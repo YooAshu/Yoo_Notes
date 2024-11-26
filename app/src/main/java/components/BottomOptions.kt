@@ -1,9 +1,12 @@
 package components
 
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,27 +27,36 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.notes.DoodlePage
 import com.example.notes.R
 import com.mohamedrejeb.richeditor.model.RichTextState
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeChild
+import io.ak1.drawbox.DrawBoxPayLoad
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomOptions(hazeState: HazeState,modifier: Modifier,state: RichTextState,bg: MutableState<Color>) {
+fun BottomOptions(hazeState: HazeState,
+                  modifier: Modifier,
+                  state: RichTextState,
+                  bg: MutableState<Color>,
+                  bgGradient: MutableState<List<Color>>,
+                  selectedImages:MutableState<List<Uri>>,
+                  path: MutableState<DrawBoxPayLoad>
+) {
+
 
 
     var fontSheetOpen by rememberSaveable {
@@ -53,10 +65,21 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier,state: RichTextState,b
     var themeSheetOpen by rememberSaveable {
         mutableStateOf(false)
     }
+    var doodleDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+    if (doodleDialog){
+        DoodleDialog(path = path, onDismiss = { doodleDialog = false })
+    }
 
     val yOffset by animateDpAsState(
         targetValue = if (fontSheetOpen || themeSheetOpen) 100.dp else 0.dp,
         tween(durationMillis = 100)
+    )
+
+    val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        onResult = {uris-> selectedImages.value = selectedImages.value + uris  }
     )
     Box(
         modifier = modifier
@@ -70,17 +93,20 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier,state: RichTextState,b
     ) {
         Row {
 
-            val context = LocalContext.current
-
 
             ButtonIcon(painter = R.drawable.fonts_icon, modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)){
                 fontSheetOpen = true
             }
             ButtonIcon(painter = R.drawable.drawicon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
-                Toast.makeText(context, "feature not added yet", Toast.LENGTH_SHORT).show()
+                doodleDialog = true
+//                navController.navigate(DoodlePage)
+//                Toast.makeText(navController.context, "Coming Soon", Toast.LENGTH_SHORT).show()
             }
             ButtonIcon(painter = R.drawable.add_photo_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
-                Toast.makeText(context, "feature not added yet", Toast.LENGTH_SHORT).show()
+                multiplePhotoPickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+
             }
             ButtonIcon(painter = R.drawable.change_theme_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
                 themeSheetOpen = true
@@ -93,7 +119,7 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier,state: RichTextState,b
 
     if (fontSheetOpen || themeSheetOpen) {
         ModalBottomSheet(
-            modifier = Modifier.fillMaxHeight(.5f),
+            modifier = Modifier,
             containerColor = Color(0xFF1A1A1A),
             sheetState = fontSheetState,
             onDismissRequest = { fontSheetOpen = false ; themeSheetOpen = false},
@@ -103,7 +129,8 @@ fun BottomOptions(hazeState: HazeState,modifier: Modifier,state: RichTextState,b
                         state = state
                     )
                     themeSheetOpen -> ThemeBottomSheet(
-                        bg = bg
+                        bg = bg,
+                        bgGradient = bgGradient
 
                     )
                 }

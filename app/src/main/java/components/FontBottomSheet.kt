@@ -1,7 +1,6 @@
 package components
 
-//import androidx.compose.foundation.layout.FlowColumnScopeInstance.weight
-import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,9 +24,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -35,12 +37,12 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.notes.R
+import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import com.mohamedrejeb.richeditor.model.RichTextState
 import kotlin.math.ceil
-
 
 
 @Composable
@@ -48,9 +50,24 @@ fun FontBottomSheet(
     state: RichTextState
 ) {
 
+    val controller = rememberColorPickerController()
+    val isColorPickerVisible = remember {
+        mutableStateOf(false)
+    }
+
+    if (isColorPickerVisible.value) {
+        ColorPickerDialog(
+            controller = controller,
+            onDismiss = {
+                isColorPickerVisible.value = false
+            },
+            state = state
+        )
+    }
+
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize(),
+            .fillMaxWidth().wrapContentHeight(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // First row with two half-width items
@@ -122,7 +139,8 @@ fun FontBottomSheet(
             }
         }
 
-        // Third item takes full width
+
+
         item {
             Row(
                 modifier = Modifier
@@ -134,7 +152,7 @@ fun FontBottomSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-//                Text(text = "Item 3")
+
                 Box(modifier = Modifier, contentAlignment = Alignment.Center) {
                     Box(
                         modifier = Modifier
@@ -146,12 +164,12 @@ fun FontBottomSheet(
                 }
                 Row {
                     val colors = listOf(
+                        Color.White,
+                        Color.Black,
                         Color.Red,
                         Color.Green,
                         Color.Blue,
                         Color.Yellow,
-                        Color.Cyan,
-                        Color.Magenta
                     )
                     for (color in colors) {
                         Box(
@@ -166,24 +184,28 @@ fun FontBottomSheet(
                     }
 
                 }
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .background(Color.Gray, shape = RoundedCornerShape(100))
-                        .clickable {
-                            Log.d("STATE",state.currentSpanStyle.toString())
-                        }
+                Button(
+                    onClick = {
+                        isColorPickerVisible.value = true
+                    },
+                    modifier = Modifier.size(30.dp),
+                    colors = ButtonDefaults.buttonColors(Color.Transparent),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-
+                    Image(
+                        painter = painterResource(id = R.drawable.colorpicker),
+                        contentDescription = "",
+                        modifier = Modifier.size(30.dp)
+                    )
                 }
+
             }
         }
         // Remaining items in a grid
         item { // Adjust 10 to 30 as per your needs
             Column(modifier = Modifier.fillMaxSize()) {
                 // Create 5 rows
-                val rows = ceil(fontsList.size/3.toDouble()).toInt()
-                Log.d("TAG", "FontBottomSheet: $rows")
+                val rows = ceil(fontsList.size / 3.toDouble()).toInt()
                 for (row in 0 until rows) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         // Create 3 columns in each row
@@ -199,7 +221,7 @@ fun FontBottomSheet(
                                         .padding(5.dp)
                                         .height(50.dp)
                                         .background(
-                                            if(state.currentSpanStyle.fontFamily == fontsList[index].fontFamily){
+                                            if (state.currentSpanStyle.fontFamily == fontsList[index].fontFamily) {
                                                 Color.White
                                             } else {
                                                 Color(0xFF272727)
@@ -208,17 +230,18 @@ fun FontBottomSheet(
                                         )
                                         .clickable {
                                             state.addSpanStyle(SpanStyle(fontFamily = fontsList[index].fontFamily))
-                                        }
-                                    ,
+                                        },
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(text = fontsList[index].fontName,
-                                        color = if(state.currentSpanStyle.fontFamily == fontsList[index].fontFamily){
+                                    Text(
+                                        text = fontsList[index].fontName,
+                                        color = if (state.currentSpanStyle.fontFamily == fontsList[index].fontFamily) {
                                             Color.Black
                                         } else {
                                             Color.White
                                         },
-                                        fontFamily = fontsList[index].fontFamily)
+                                        fontFamily = fontsList[index].fontFamily
+                                    )
                                 }
                             } else {
                                 // Empty box if no item exists
@@ -270,7 +293,7 @@ fun FontStyleButton(clicked: Boolean, textStyle: TextStyle, text: String, onCLic
 }
 
 @Composable
-fun FontSizeChanger(modifier: Modifier,state: RichTextState) {
+fun FontSizeChanger(modifier: Modifier, state: RichTextState) {
     Row(
         modifier = modifier
             .fillMaxHeight()
