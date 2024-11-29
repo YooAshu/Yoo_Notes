@@ -3,10 +3,12 @@ package components
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,9 +58,6 @@ import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import com.mohamedrejeb.richeditor.model.RichTextState
 import io.ak1.drawbox.DrawBoxPayLoad
 import io.ak1.drawbox.DrawController
-import io.getstream.sketchbook.PaintColorPalette
-import io.getstream.sketchbook.PaintColorPaletteTheme
-import io.getstream.sketchbook.SketchbookController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +97,7 @@ fun AddCategoryDialog(
                     text.value = it
                 },
                 placeholder = {
-                    Text(text = "Category Name",color = Color.White)
+                    Text(text = "Category Name", color = Color.White)
                 },
                 maxLines = 1,
                 modifier = Modifier
@@ -128,7 +127,14 @@ fun AddCategoryDialog(
                         onDismiss()
                     },
                     colors = ButtonDefaults.buttonColors(Color.Transparent)
-                ) { Text(text = "Cancel",color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp) }
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
 
                 Button(
                     modifier = Modifier,
@@ -139,7 +145,14 @@ fun AddCategoryDialog(
                         onDismiss()
                     },
                     colors = ButtonDefaults.buttonColors(Color.Transparent)
-                ) { Text(text = "Add", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp) }
+                ) {
+                    Text(
+                        text = "Add",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
             }
 
         }
@@ -152,7 +165,7 @@ fun ColorPickerDialog(
     controller: ColorPickerController,
     onDismiss: () -> Unit,
     state: RichTextState
-){
+) {
     var color: Color = Color.Black
     BasicAlertDialog(
         onDismissRequest = {
@@ -162,10 +175,13 @@ fun ColorPickerDialog(
             .background(Color(0xFF272727), shape = RoundedCornerShape(20.dp))
             .padding(16.dp)
 
-    ){
+    ) {
         Column {
-            Text(text = "Color Picker", fontWeight = FontWeight.Bold, modifier = Modifier.align(
-                Alignment.CenterHorizontally))
+            Text(
+                text = "Color Picker", fontWeight = FontWeight.Bold, modifier = Modifier.align(
+                    Alignment.CenterHorizontally
+                )
+            )
             HsvColorPicker(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -194,7 +210,6 @@ fun ColorPickerDialog(
         }
 
 
-
     }
 }
 
@@ -203,28 +218,28 @@ fun ColorPickerDialog(
 fun ImageShowDialog(
     uri: Uri,
     onDismiss: () -> Unit,
-){
+) {
     BasicAlertDialog(
         onDismissRequest = { onDismiss() },
         modifier = Modifier
             .fillMaxWidth(.9f)
             .wrapContentHeight()
-    ){
+    ) {
         AsyncImage(
             model = uri,
             contentDescription = null,
 
-        )
+            )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaintBrushDialog(
-    onDismiss : ()-> Unit,
-    sketchbookController : DrawController,
+    onDismiss: () -> Unit,
+    sketchbookController: DrawController,
 
-){
+    ) {
     var controller = rememberColorPickerController()
     var topBarColor = remember { mutableStateOf(sketchbookController.color) }
     var sliderPosition = remember { mutableFloatStateOf(sketchbookController.strokeWidth) }
@@ -232,7 +247,7 @@ fun PaintBrushDialog(
         onDismissRequest = {
             sketchbookController.changeColor(topBarColor.value)
             onDismiss()
-                           },
+        },
         modifier = Modifier
             .wrapContentSize()
             .shadow(10.dp, shape = RoundedCornerShape(30.dp))
@@ -243,10 +258,12 @@ fun PaintBrushDialog(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .height(30.dp)
-                .background(color = topBarColor.value))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(30.dp)
+                    .background(color = topBarColor.value)
+            )
             HsvColorPicker(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -289,7 +306,7 @@ fun PaintBrushDialog(
                 onValueChange = {
                     sliderPosition.floatValue = it
                     sketchbookController.changeStrokeWidth(it)
-                                },
+                },
                 colors = SliderDefaults.colors(
                     thumbColor = Color.White,
                     activeTrackColor = Color.White,
@@ -329,9 +346,9 @@ fun PaintBrushDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoodleDialog(
-    onDismiss : ()-> Unit,
+    onDismiss: () -> Unit,
     path: MutableState<DrawBoxPayLoad>
-){
+) {
     BasicAlertDialog(
         onDismissRequest = { onDismiss() },
         modifier = Modifier.fillMaxSize(),
@@ -339,7 +356,97 @@ fun DoodleDialog(
     )
     {
 
-        DoodleScreen(onDismiss,path)
+        DoodleScreen(onDismiss, path)
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NoteLongClickDialog(
+    onDismiss: () -> Unit,
+    deleteDialogShown : MutableState<Boolean>
+) {
+
+    BasicAlertDialog(
+        onDismissRequest = { onDismiss() },
+        modifier = Modifier
+            .background(Color(0xFF272727), shape = RoundedCornerShape(30.dp))
+            .padding(vertical = 10.dp),
+    )
+    {
+        Column {
+            Box(
+                modifier = Modifier.padding(20.dp).height(50.dp).fillMaxWidth()
+                    .clickable {
+                        deleteDialogShown.value = true
+                        onDismiss()
+                    },
+                contentAlignment = Alignment.CenterStart
+            ){
+                Text(text = "Delete?",
+                    modifier = Modifier
+
+                )
+            }
+
+        }
+
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NoteDeleteDialog(
+    onDismiss: () -> Unit,
+    onDelete: () -> Unit
+) {
+    BasicAlertDialog(
+        onDismissRequest = { onDismiss() },
+        modifier = Modifier.background(Color(0xFF272727), shape = RoundedCornerShape(30.dp))
+            .padding(20.dp),
+    )
+    {
+        Column(modifier = Modifier) {
+            Text(text = "Delete this note?")
+            Spacer(modifier = Modifier.height(30.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    modifier = Modifier,
+                    onClick = {
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(Color.Transparent)
+                ) {
+                    Text(
+                        text = "Cancel",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+
+                Button(
+                    modifier = Modifier,
+                    onClick = {
+                        onDelete()
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(Color.Transparent)
+                ) {
+                    Text(
+                        text = "Delete",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            }
+        }
+
+    }
+}

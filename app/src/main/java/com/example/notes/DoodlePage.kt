@@ -34,8 +34,6 @@ import components.PaintBrushDialog
 import io.ak1.drawbox.DrawBox
 import io.ak1.drawbox.DrawBoxPayLoad
 import io.ak1.drawbox.rememberDrawController
-import io.getstream.sketchbook.Sketchbook
-import io.getstream.sketchbook.rememberSketchbookController
 
 //
 //@Composable

@@ -29,6 +29,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,8 +55,9 @@ import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import components.BottomOptions
 import components.DropDownList
 import components.ImageShowDialog
-import components.allNotes
 import components.conditionalBackground
+import components.isNoteModified
+import components.toTimeDateString
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
@@ -67,58 +69,56 @@ var imageIndex: Int = 0
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditNote(navController: NavController, listIndex: Int, position: Int) {
+fun EditNote(
+    navController: NavController,
+    listIndex: Int,
+    position: Int,
+    allNotes: MutableState<List<Note>>
+) {
 
     val notes = if (listIndex == 0) {
-        allNotes
+        allNotes.value
     } else {
-        allNotes.filter { it.category == listIndex }
+        allNotes.value.filter { it.category == listIndex }
     }
-    var allNotesPosition: Int = -1
-    if (position != -1) {
-        allNotesPosition = allNotes.indexOf(notes[position])
-    }
-    val textFieldTitleState =
-        if (position == -1) remember {
-            mutableStateOf("")
-        } else allNotes[allNotesPosition].title
 
-    val richTextDescState =
-        if (position == -1) rememberRichTextState() else allNotes[allNotesPosition].richTextDescState
-
-    val bgColor =
-        if (position == -1) {
-            remember {
-                mutableStateOf(Color(0xFFECE3C1))
-            }
-        } else allNotes[allNotesPosition].bg
-
-    val bgGradient =
-        if (position == -1) {
-            remember {
-                mutableStateOf(listOf(Color(0xFFECE3C1), Color(0xFFECE3C1)))
-            }
-        } else allNotes[allNotesPosition].bgGradient
-
-    var imageUriList =
-        if (position == -1) {
-            remember { mutableStateOf<List<Uri>>(emptyList<Uri>()) }
-        } else {
-            allNotes[allNotesPosition].imageList
+    var allNotesPosition: Int;
+    var textFieldTitleState: MutableState<String>;
+    var category: Int;
+    var bgColor: MutableState<Color>;
+    var bgGradient: MutableState<List<Color>>;
+    var imageUriList: MutableState<List<Uri>>;
+    var path: MutableState<DrawBoxPayLoad>;
+    var dateCreated : Long;
+    var dateModified : Long;
+    if (position == -1) {
+        allNotesPosition = -1
+        textFieldTitleState = remember { mutableStateOf("") }
+        category = listIndex
+        bgColor = remember { mutableStateOf(Color(0xFFECE3C1)) }
+        bgGradient = remember { mutableStateOf(listOf(Color(0xFFECE3C1), Color(0xFFECE3C1))) }
+        imageUriList = remember { mutableStateOf(emptyList<Uri>()) }
+        path = remember { mutableStateOf(DrawBoxPayLoad(Color.White, emptyList())) }
+        dateCreated = System.currentTimeMillis()
+        dateModified = System.currentTimeMillis()
+    } else {
+        allNotesPosition = allNotes.value.indexOf(notes[position])
+        textFieldTitleState = remember { mutableStateOf(allNotes.value[allNotesPosition].title) }
+        category = allNotes.value[allNotesPosition].category
+        bgColor = remember { mutableStateOf(allNotes.value[allNotesPosition].bg) }
+        bgGradient = remember { mutableStateOf(allNotes.value[allNotesPosition].bgGradient) }
+        imageUriList = remember {
+            mutableStateOf(allNotes.value[allNotesPosition].imageList.map { stringUri-> Uri.parse(stringUri) })
         }
+        path = remember { mutableStateOf(allNotes.value[allNotesPosition].doodlePath) }
+        dateCreated = allNotes.value[allNotesPosition].dateCreated
+        dateModified = allNotes.value[allNotesPosition].dateModified
 
-    var path=
-        if (position == -1) {
-            remember { mutableStateOf<DrawBoxPayLoad>(DrawBoxPayLoad(Color.White,emptyList())) }
-        } else {
-            allNotes[allNotesPosition].doodlePath
-        }
-
-
-    val category = if (position == -1) listIndex else allNotes[allNotesPosition].category
-    LaunchedEffect(1) {
-        isGradient = if (position != -1) allNotes[allNotesPosition].themesIndex else 0
     }
+
+    var richTextDescState =rememberRichTextState()
+
+
 
 
     if (richTextDescState.currentSpanStyle.fontSize.value.isNaN()) {
@@ -132,6 +132,14 @@ fun EditNote(navController: NavController, listIndex: Int, position: Int) {
     val selectedIndex = remember { mutableIntStateOf(category) }
     var isImageDialogShown by remember { mutableStateOf(false) }
 
+    LaunchedEffect(1) {
+        if(position!=-1){
+            richTextDescState.setHtml(allNotes.value[allNotesPosition].html)
+            if (allNotes.value[allNotesPosition].descText.isBlank()){
+                richTextDescState.setText("")
+            }
+        }
+    }
 
     if (isImageDialogShown) {
         ImageShowDialog(
@@ -343,6 +351,11 @@ fun EditNote(navController: NavController, listIndex: Int, position: Int) {
                 path = path
             )
 
+            Text(dateCreated.toTimeDateString(),
+                color = Color.Black.copy(alpha = 0.5f),
+                fontSize = 12.sp,
+                modifier = Modifier.align(Alignment.TopEnd))
+
 
         }
 
@@ -355,26 +368,35 @@ fun EditNote(navController: NavController, listIndex: Int, position: Int) {
             if (textFieldTitleState.value.isNotEmpty() || richTextDescState.toText()
                     .isNotEmpty() || imageUriList.value.isNotEmpty()
             ) {
-
+                val note = Note(
+                    title = textFieldTitleState.value,
+                    bg = bgColor.value,
+                    bgGradient = bgGradient.value,
+                    category = selectedIndex.intValue,
+                    themesIndex = isGradient,
+                    imageList = imageUriList.value.map { uri-> uri.toString() },
+                    doodlePath = path.value,
+                    html = richTextDescState.toHtml(),
+                    descText = richTextDescState.toText(),
+                    dateCreated = dateCreated,
+                    dateModified = dateModified
+                )
 
                 if (position == -1) {
-                    val note = Note(
-                        textFieldTitleState,
-                        richTextDescState,
-                        bgColor,
-                        bgGradient,
-                        selectedIndex.intValue,
-                        isGradient,
-                        imageUriList,
-                        path
-                    )
-                    allNotes.add(0, note)
+                    allNotes.value = listOf<Note>(note) + allNotes.value
                 } else {
-                    allNotes[allNotesPosition].category = selectedIndex.intValue
-                    allNotes[allNotesPosition].themesIndex = isGradient
+                    if(isNoteModified(note, allNotesPosition, allNotes.value)){
+                        note.dateModified = System.currentTimeMillis()
+                    }
+                    allNotes.value = allNotes.value.mapIndexed { i, oldNote ->
+                        if (i == allNotesPosition) note else oldNote
+                    }
 
                 }
-
+            } else {
+                if (position != -1) {
+                    allNotes.value = allNotes.value.filterIndexed { i, _ -> i != allNotesPosition }
+                }
             }
         }
     }

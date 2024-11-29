@@ -68,7 +68,7 @@ import com.mohamedrejeb.richeditor.model.RichTextState
 import components.AddCategoryDialog
 import components.ButtonIcon
 import components.NoteCard
-import components.allNotes
+import components.NoteRepository
 import components.listOfNotesList
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
@@ -78,7 +78,12 @@ import kotlinx.serialization.Serializable
 
 
 class MainActivity : ComponentActivity() {
+    lateinit var allNotes: List<Note>
+    lateinit var allNotesState: MutableState<List<Note>>
     override fun onCreate(savedInstanceState: Bundle?) {
+        allNotes = NoteRepository.getNotes(this)
+//        if (allNotes.isNotEmpty())
+//            Log.d("oncreate", "${allNotes[0].imageList}")
         installSplashScreen().apply {
             setOnExitAnimationListener { screen ->
                 val zoomX = ObjectAnimator.ofFloat(
@@ -113,17 +118,22 @@ class MainActivity : ComponentActivity() {
                     mutableIntStateOf(0)
                 }
                 val navController = rememberNavController()
+                allNotesState = remember { mutableStateOf<List<Note>>(allNotes) }
 
                 NavHost(navController = navController, startDestination = HomePage) {
                     composable<HomePage> {
-                        HomePage(navController, listIndex)
+                        HomePage(navController, listIndex, allNotesState)
                     }
                     composable<EditNote> {
 
                         val args = it.toRoute<EditNote>()
-                        Log.d("TAG", "onCreate: ${args.position}")
 
-                        EditNote(navController, listIndex.intValue, position = args.position)
+                        EditNote(
+                            navController,
+                            listIndex.intValue,
+                            position = args.position,
+                            allNotesState
+                        )
                     }
                     composable<DoodlePage> {
 //                        DoodleScreen(navController)
@@ -134,22 +144,43 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+//        Log.d("test", "onDestroy")
+//        NoteRepository.saveNotes(this, allNotesState.value)
+    }
+
+    override fun onStop() {
+        super.onStop()
+//        Log.d("onstop", "${allNotesState.value[0].imageList}")
+
+        NoteRepository.saveNotes(this, allNotesState.value)
+    }
+
 
 }
 
 data class Note(
-    var title: MutableState<String>,
-    var richTextDescState: RichTextState,
-    var bg: MutableState<Color>,
-    var bgGradient: MutableState<List<Color>>,
-    var category: Int = 0,
+    var title: String,
+    var bg: Color,
+    var bgGradient: List<Color>,
+    var category: Int,
     var themesIndex: Int = 0,
-    var imageList: MutableState<List<Uri>>,
-    var doodlePath : MutableState<DrawBoxPayLoad>
+    var imageList: List<String>,
+    var doodlePath: DrawBoxPayLoad,
+    var html: String,
+    var descText: String,
+    var dateCreated: Long,
+    var dateModified: Long
 )
 
 @Composable
-fun HomePage(navController: NavController, listIndex: MutableIntState) {
+fun HomePage(
+    navController: NavController,
+    listIndex: MutableIntState,
+    allNotes: MutableState<List<Note>>
+) {
+
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
@@ -182,17 +213,22 @@ fun HomePage(navController: NavController, listIndex: MutableIntState) {
                     TopPart(listIndex)
                 }
 
-                val notes =
-                    if (listIndex.intValue == 0) {
-                        allNotes
-                    } else {
-                        allNotes.filter { it.category == listIndex.intValue }
-                    }
+                val notes = if (listIndex.intValue == 0) {
+                    allNotes.value
+                } else {
+                    allNotes.value.filter { it.category == listIndex.intValue }
+                }
                 itemsIndexed(notes) { index, note ->
 
-                    NoteCard(note = note, onClick = {
-                        navController.navigate(EditNote(position = index))
-                    })
+                    NoteCard(note = note,
+                        onClick = {
+                            navController.navigate(EditNote(position = index))
+                        },
+                        onDelete = {
+                            val allNotesPosition = allNotes.value.indexOf(note)
+                            allNotes.value = allNotes.value.filterIndexed { i, _ -> i != allNotesPosition }
+                        }
+                    )
 
                 }
 

@@ -74,8 +74,9 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("com.github.skydoves:colorpicker-compose:1.1.2")
     implementation("io.coil-kt.coil3:coil-compose:3.0.3")
-    implementation ("io.getstream:sketchbook:1.0.4")
-    implementation  ("io.ak1:drawbox:1.0.3")
+    implementation ("io.ak1:drawbox:1.0.3")
+    implementation ("androidx.datastore:datastore-preferences:1.0.0")
+    implementation ("com.google.code.gson:gson:2.8.9")
 
 
     implementation(libs.navigation.compose)

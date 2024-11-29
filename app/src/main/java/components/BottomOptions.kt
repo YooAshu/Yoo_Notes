@@ -1,5 +1,6 @@
 package components
 
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -36,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.notes.DoodlePage
@@ -48,15 +50,15 @@ import io.ak1.drawbox.DrawBoxPayLoad
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomOptions(hazeState: HazeState,
-                  modifier: Modifier,
-                  state: RichTextState,
-                  bg: MutableState<Color>,
-                  bgGradient: MutableState<List<Color>>,
-                  selectedImages:MutableState<List<Uri>>,
-                  path: MutableState<DrawBoxPayLoad>
+fun BottomOptions(
+    hazeState: HazeState,
+    modifier: Modifier,
+    state: RichTextState,
+    bg: MutableState<Color>,
+    bgGradient: MutableState<List<Color>>,
+    selectedImages: MutableState<List<Uri>>,
+    path: MutableState<DrawBoxPayLoad>
 ) {
-
 
 
     var fontSheetOpen by rememberSaveable {
@@ -68,7 +70,7 @@ fun BottomOptions(hazeState: HazeState,
     var doodleDialog by rememberSaveable {
         mutableStateOf(false)
     }
-    if (doodleDialog){
+    if (doodleDialog) {
         DoodleDialog(path = path, onDismiss = { doodleDialog = false })
     }
 
@@ -77,9 +79,36 @@ fun BottomOptions(hazeState: HazeState,
         tween(durationMillis = 100)
     )
 
+//    val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
+//        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+//        onResult = { uris ->
+//            selectedImages.value = selectedImages.value + uris
+//            Log.d("picker", "${selectedImages.value}")
+//        }
+//    )
+    val context = LocalContext.current
     val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
-        onResult = {uris-> selectedImages.value = selectedImages.value + uris  }
+        onResult = { uris ->
+            if (uris != null && uris.isNotEmpty()) {
+                // Persist permissions for each URI
+                uris.forEach { uri ->
+                    try {
+                        context.contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                    } catch (e: Exception) {
+                        Log.e("Picker", "Failed to persist permissions for $uri: $e")
+                    }
+                }
+
+                // Update the state and save URIs as strings
+                selectedImages.value = selectedImages.value + uris
+//                saveUrisToPreferences(context, uris)
+//                Log.d("picker", "Selected images: ${selectedImages.value}")
+            }
+        }
     )
     Box(
         modifier = modifier
@@ -94,21 +123,37 @@ fun BottomOptions(hazeState: HazeState,
         Row {
 
 
-            ButtonIcon(painter = R.drawable.fonts_icon, modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)){
+            ButtonIcon(
+                painter = R.drawable.fonts_icon,
+                modifier = Modifier.size(80.dp),
+                bgColor = Color(0xFF272727)
+            ) {
                 fontSheetOpen = true
             }
-            ButtonIcon(painter = R.drawable.drawicon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
+            ButtonIcon(
+                painter = R.drawable.drawicon,
+                modifier = Modifier.size(80.dp),
+                bgColor = Color(0xFF272727)
+            ) {
                 doodleDialog = true
 //                navController.navigate(DoodlePage)
 //                Toast.makeText(navController.context, "Coming Soon", Toast.LENGTH_SHORT).show()
             }
-            ButtonIcon(painter = R.drawable.add_photo_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
+            ButtonIcon(
+                painter = R.drawable.add_photo_icon,
+                modifier = Modifier.size(80.dp),
+                bgColor = Color(0xFF272727)
+            ) {
                 multiplePhotoPickerLauncher.launch(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
 
             }
-            ButtonIcon(painter = R.drawable.change_theme_icon,modifier = Modifier.size(80.dp), bgColor = Color(0xFF272727)) {
+            ButtonIcon(
+                painter = R.drawable.change_theme_icon,
+                modifier = Modifier.size(80.dp),
+                bgColor = Color(0xFF272727)
+            ) {
                 themeSheetOpen = true
             }
         }
@@ -122,12 +167,13 @@ fun BottomOptions(hazeState: HazeState,
             modifier = Modifier,
             containerColor = Color(0xFF1A1A1A),
             sheetState = fontSheetState,
-            onDismissRequest = { fontSheetOpen = false ; themeSheetOpen = false},
+            onDismissRequest = { fontSheetOpen = false; themeSheetOpen = false },
             content = {
-                when{
+                when {
                     fontSheetOpen -> FontBottomSheet(
                         state = state
                     )
+
                     themeSheetOpen -> ThemeBottomSheet(
                         bg = bg,
                         bgGradient = bgGradient
@@ -153,23 +199,33 @@ fun CustomDragHandle(hazeState: HazeState) {
         verticalAlignment = Alignment.CenterVertically
 
 
-    ){
-        ButtonIcon(painter = R.drawable.cross_icon,modifier = Modifier.size(60.dp),contentPadding = 10.dp, bgColor = Color(
-            0xFF272727
-        )
+    ) {
+        ButtonIcon(
+            painter = R.drawable.cross_icon,
+            modifier = Modifier.size(60.dp),
+            contentPadding = 10.dp,
+            bgColor = Color(
+                0xFF272727
+            )
         ) {
             Log.d("CustomDragHandle", "Button clicked")
         }
-        Box(modifier = Modifier
-            .width(50.dp)  // Width of the handle
-            .height(6.dp)  // Height of the handle
-            .clip(RoundedCornerShape(3.dp))  // Rounded corners for the handle
-            .background(Color(0xFF272727)))  // Background color of the handle (can be customized))
-        ButtonIcon(painter = R.drawable.round_check_24,modifier = Modifier.size(60.dp),contentPadding = 10.dp,bgColor = Color(0xFF272727)) {
+        Box(
+            modifier = Modifier
+                .width(50.dp)  // Width of the handle
+                .height(6.dp)  // Height of the handle
+                .clip(RoundedCornerShape(3.dp))  // Rounded corners for the handle
+                .background(Color(0xFF272727))
+        )  // Background color of the handle (can be customized))
+        ButtonIcon(
+            painter = R.drawable.round_check_24,
+            modifier = Modifier.size(60.dp),
+            contentPadding = 10.dp,
+            bgColor = Color(0xFF272727)
+        ) {
             Log.d("CustomDragHandle", "Button clicked")
         }
     }
-
 
 
 }
