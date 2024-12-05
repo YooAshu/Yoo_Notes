@@ -76,21 +76,30 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
                 onDismissRequest = {
                     isExpanded = false
                 },
-                modifier = Modifier.width(150.dp).background(Color(0xFF272727))
+                modifier = Modifier
+                    .width(150.dp)
+                    .background(Color(0xFF272727))
             ) {
 
                 listOfNotesList.forEachIndexed { index, notesList ->
                     DropdownMenuItem(
-                        text = { Text(notesList.listName,color = if(selectedIndex.intValue == index) Color.Black else Color.White) },
+                        text = {
+                            Text(
+                                notesList.listName,
+                                color = if (selectedIndex.intValue == index) Color.Black else Color.White
+                            )
+                        },
                         onClick = {
                             selectedIndex.intValue = index
                             isExpanded = false
                         },
-                        modifier = Modifier.height(30.dp).background(if(selectedIndex.intValue == index) Color.White else Color.Transparent)
+                        modifier = Modifier
+                            .height(30.dp)
+                            .background(if (selectedIndex.intValue == index) Color.White else Color.Transparent)
                     )
                 }
                 DropdownMenuItem(
-                    text = {Text("+ Add Category",color = Color.White)},
+                    text = { Text("+ Add Category", color = Color.White) },
                     onClick = {
                         isDialogShown = true
                     },
@@ -104,3 +113,4 @@ fun DropDownList(modifier: Modifier, selectedIndex: MutableIntState) {
     }
 
 }
+

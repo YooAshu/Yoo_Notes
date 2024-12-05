@@ -63,6 +63,7 @@ data class Fonts(
 )
 
 val fontsList = listOf(
+    Fonts("Default", FontFamily.Default),
     Fonts("Indie Flower", IndieFlowerFamily),
     Fonts("Tangerine", TangerineFamily),
     Fonts("Silk Screen", SilkScreenFamily),

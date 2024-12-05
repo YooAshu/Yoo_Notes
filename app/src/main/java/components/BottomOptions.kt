@@ -40,7 +40,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.notes.DoodlePage
 import com.example.notes.R
 import com.mohamedrejeb.richeditor.model.RichTextState
 import dev.chrisbanes.haze.HazeState
@@ -57,7 +56,8 @@ fun BottomOptions(
     bg: MutableState<Color>,
     bgGradient: MutableState<List<Color>>,
     selectedImages: MutableState<List<Uri>>,
-    path: MutableState<DrawBoxPayLoad>
+    path: MutableState<DrawBoxPayLoad>,
+    themeIndex: MutableState<Int>
 ) {
 
 
@@ -176,7 +176,8 @@ fun BottomOptions(
 
                     themeSheetOpen -> ThemeBottomSheet(
                         bg = bg,
-                        bgGradient = bgGradient
+                        bgGradient = bgGradient,
+                        themesSelectedIndex = themeIndex
 
                     )
                 }

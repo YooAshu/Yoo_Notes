@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.notes.Note
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import com.mohamedrejeb.richeditor.ui.material3.RichText
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -101,6 +103,13 @@ fun NoteCard(note: Note, modifier: Modifier = Modifier, onClick: () -> Unit = {}
             )
 
 //        Spacer(modifier = Modifier.height(10.dp))
+//            RichText(
+//                state = rememberRichTextState().setHtml(note.html),
+//                modifier = Modifier
+//                    .padding(bottom = 10.dp, start = 20.dp, end = 20.dp),
+//                fontSize = 12.sp,
+//                maxLines = 9
+//            )
             Text(
                 text = note.descText,
                 style = TextStyle(fontSize = 14.sp, color = Color.Black),

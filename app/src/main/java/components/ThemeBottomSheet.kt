@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.notes.isGradient
 
 fun Modifier.conditionalBackground(
     isGradient: Int,
@@ -53,14 +52,15 @@ fun Modifier.conditionalBackground(
 @Composable
 fun ThemeBottomSheet(
     bg: MutableState<Color>,
-    bgGradient: MutableState<List<Color>>
+    bgGradient: MutableState<List<Color>>,
+    themesSelectedIndex : MutableState<Int>
 ) {
-    val topItems = listOf(
+    val bgTypes = listOf(
         "Solid Color",
         "Gradient"
     )
 
-    var themesSelectedIndex by remember { mutableIntStateOf(0) }
+    var bgTypeIndex by remember { mutableIntStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -71,15 +71,15 @@ fun ThemeBottomSheet(
                 .fillMaxWidth()
                 .padding(5.dp)
         ) {
-            items(topItems.size) { index ->
+            items(bgTypes.size) { index ->
                 Text(
-                    text = topItems[index],
+                    text = bgTypes[index],
                     modifier = Modifier
-                        .background(if (themesSelectedIndex == index) Color.White else Color.Transparent , shape = RoundedCornerShape(5.dp))
+                        .background(if (bgTypeIndex == index) Color.White else Color.Transparent , shape = RoundedCornerShape(5.dp))
                         .padding(5.dp)
                         .clickable {
-                            themesSelectedIndex = index
-                        }, color = if (themesSelectedIndex == index) Color.Black else Color.White
+                            bgTypeIndex = index
+                        }, color = if (bgTypeIndex == index) Color.Black else Color.White
                 )
             }
         }
@@ -96,15 +96,15 @@ fun ThemeBottomSheet(
                 bgGradient.value = colors
 
             }
-            items(if (themesSelectedIndex == 0) colors else gradients) { item ->
+            items(if (bgTypeIndex == 0) colors else gradients) { item ->
                 Box(
                     modifier = Modifier
                         .aspectRatio(1f)
                         .padding(5.dp)
                         .conditionalBackground(
-                            themesSelectedIndex,
-                            if (themesSelectedIndex == 0) item as Color else Color.Transparent,
-                            if (themesSelectedIndex == 1) item as List<Color> else listOf(
+                            bgTypeIndex,
+                            if (bgTypeIndex == 0) item as Color else Color.Transparent,
+                            if (bgTypeIndex == 1) item as List<Color> else listOf(
                                 Color.Transparent,
                                 Color.Transparent
                             ),
@@ -112,14 +112,14 @@ fun ThemeBottomSheet(
                         )
 
                         .clickable {
-                            if (themesSelectedIndex == 0) {
-                                isGradient=0
-                                bgGradient.value = listOf(Color.Transparent, Color.Transparent)
+                            if (bgTypeIndex == 0) {
+                                themesSelectedIndex.value=0
+//                                bgGradient.value = listOf(Color.Transparent, Color.Transparent)
                                 changeTheme(item as Color)
                             }
                             else{
-                                isGradient = 1
-                                bg.value = Color.Transparent
+                                themesSelectedIndex.value = 1
+//                                bg.value = Color.Transparent
                                 changeGradient(item as List<Color>)
                             }
                         },

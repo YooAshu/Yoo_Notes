@@ -18,23 +18,29 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -54,6 +60,7 @@ fun FontBottomSheet(
     val isColorPickerVisible = remember {
         mutableStateOf(false)
     }
+    val paraStyleIndex = remember { mutableIntStateOf(1) }
 
     if (isColorPickerVisible.value) {
         ColorPickerDialog(
@@ -67,10 +74,142 @@ fun FontBottomSheet(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxWidth().wrapContentHeight(),
+            .fillMaxWidth()
+            .wrapContentHeight(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // First row with two half-width items
+
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .background(color = Color(0xFF272727), shape = RoundedCornerShape(10.dp))
+                        .weight(.5f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    IconButton(
+                        onClick = {
+                            state.addParagraphStyle(ParagraphStyle(textAlign = TextAlign.Left))
+                            paraStyleIndex.intValue = 1
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.align_left),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    if (paraStyleIndex.intValue == 1) Color.White else Color.Transparent,
+                                    CircleShape
+                                )
+                                .padding(8.dp),
+                            tint = if (paraStyleIndex.intValue == 1) Color.Black else Color.White
+                        )
+
+                    }
+                    IconButton(
+                        onClick = {
+                            state.addParagraphStyle(ParagraphStyle(textAlign = TextAlign.Center))
+                            paraStyleIndex.intValue = 2
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.align_centre),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    if (paraStyleIndex.intValue == 2) Color.White else Color.Transparent,
+                                    CircleShape
+                                )
+                                .padding(8.dp),
+                            tint = if (paraStyleIndex.intValue == 2) Color.Black else Color.White
+                        )
+
+                    }
+                    IconButton(
+                        onClick = {
+                            state.addParagraphStyle(ParagraphStyle(textAlign = TextAlign.Right))
+                            paraStyleIndex.intValue = 3
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.align_right),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    if (paraStyleIndex.intValue == 3) Color.White else Color.Transparent,
+                                    CircleShape
+                                )
+                                .padding(8.dp),
+                            tint = if (paraStyleIndex.intValue == 3) Color.Black else Color.White
+                        )
+
+                    }
+
+                }
+
+//                Row(
+//                    modifier = Modifier
+//                        .padding(10.dp)
+//                        .fillMaxWidth()
+//                        .height(50.dp)
+//                        .background(color = Color(0xFF272727), shape = RoundedCornerShape(10.dp))
+//                        .weight(1f),
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    horizontalArrangement = Arrangement.SpaceAround
+//                ) {
+//                    IconButton(
+//                        onClick = {
+//                            state.toggleOrderedList()
+//                        },
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.list_o),
+//                            contentDescription = null,
+//                            modifier = Modifier
+//                                .size(40.dp)
+//                                .background(
+//                                    if (state.isOrderedList) Color.White else Color.Transparent,
+//                                    CircleShape
+//                                )
+//                                .padding(8.dp),
+//                            tint = if (state.isOrderedList) Color.Black else Color.White
+//                        )
+//
+//                    }
+//                    IconButton(
+//                        onClick = {
+//                            state.toggleUnorderedList()
+//                        },
+//                    ) {
+//                        Icon(
+//                            painter = painterResource(R.drawable.list_u),
+//                            contentDescription = null,
+//                            modifier = Modifier
+//                                .size(40.dp)
+//                                .background(
+//                                    if (state.isUnorderedList) Color.White else Color.Transparent,
+//                                    CircleShape
+//                                )
+//                                .padding(8.dp),
+//                            tint = if (state.isUnorderedList) Color.Black else Color.White
+//                        )
+//
+//                    }
+//                }
+
+            }
+        }
+
         item {
             Row(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -138,7 +277,6 @@ fun FontBottomSheet(
                 }
             }
         }
-
 
 
         item {

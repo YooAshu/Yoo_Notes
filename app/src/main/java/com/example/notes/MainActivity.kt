@@ -2,10 +2,12 @@ package com.example.notes
 
 
 import android.animation.ObjectAnimator
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.animation.OvershootInterpolator
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -47,11 +49,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -69,6 +73,7 @@ import components.AddCategoryDialog
 import components.ButtonIcon
 import components.NoteCard
 import components.NoteRepository
+import components.SortDialog
 import components.listOfNotesList
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
@@ -82,8 +87,6 @@ class MainActivity : ComponentActivity() {
     lateinit var allNotesState: MutableState<List<Note>>
     override fun onCreate(savedInstanceState: Bundle?) {
         allNotes = NoteRepository.getNotes(this)
-//        if (allNotes.isNotEmpty())
-//            Log.d("oncreate", "${allNotes[0].imageList}")
         installSplashScreen().apply {
             setOnExitAnimationListener { screen ->
                 val zoomX = ObjectAnimator.ofFloat(
@@ -135,8 +138,8 @@ class MainActivity : ComponentActivity() {
                             allNotesState
                         )
                     }
-                    composable<DoodlePage> {
-//                        DoodleScreen(navController)
+                    composable<SearchPage> {
+                        SearchPage(navController,allNotesState)
                     }
                 }
 
@@ -146,15 +149,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-//        Log.d("test", "onDestroy")
-//        NoteRepository.saveNotes(this, allNotesState.value)
     }
 
     override fun onStop() {
         super.onStop()
-//        Log.d("onstop", "${allNotesState.value[0].imageList}")
 
-        NoteRepository.saveNotes(this, allNotesState.value)
+        NoteRepository.saveNotes(this, allNotesState.value.sortedByDescending { it.dateModified })
     }
 
 
@@ -180,7 +180,9 @@ fun HomePage(
     listIndex: MutableIntState,
     allNotes: MutableState<List<Note>>
 ) {
-
+    val sortOptionIndex = rememberSaveable() {
+        mutableIntStateOf(2)
+    }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
@@ -195,6 +197,25 @@ fun HomePage(
             val hazeState = remember {
                 HazeState()
             }
+
+            when (sortOptionIndex.intValue) {
+                0 -> {
+                    allNotes.value = allNotes.value.sortedByDescending { it.dateModified }
+                }
+
+                1 -> {
+                    allNotes.value = allNotes.value.sortedBy { it.dateModified }
+                }
+
+                2 -> {
+                    allNotes.value = allNotes.value.sortedByDescending { it.dateCreated }
+                }
+
+                3 -> {
+                    allNotes.value = allNotes.value.sortedBy { it.dateCreated }
+                }
+            }
+
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -210,7 +231,7 @@ fun HomePage(
             ) {
 
                 item(span = StaggeredGridItemSpan.FullLine) {
-                    TopPart(listIndex)
+                    TopPart(listIndex, allNotes, sortOptionIndex, navController)
                 }
 
                 val notes = if (listIndex.intValue == 0) {
@@ -226,7 +247,8 @@ fun HomePage(
                         },
                         onDelete = {
                             val allNotesPosition = allNotes.value.indexOf(note)
-                            allNotes.value = allNotes.value.filterIndexed { i, _ -> i != allNotesPosition }
+                            allNotes.value =
+                                allNotes.value.filterIndexed { i, _ -> i != allNotesPosition }
                         }
                     )
 
@@ -259,7 +281,13 @@ fun HomePage(
 }
 
 @Composable
-fun TopPart(listIndex: MutableIntState) {
+fun TopPart(
+    listIndex: MutableIntState,
+    allNotes: MutableState<List<Note>>,
+    sortOptionIndex: MutableIntState,
+    navController: NavController
+) {
+    val context = LocalContext.current
     Column {
         Row(
             modifier = Modifier
@@ -298,6 +326,19 @@ fun TopPart(listIndex: MutableIntState) {
             ) {
 
                 var showSubMenu by remember { mutableStateOf(false) }
+                var showSortDialog by remember { mutableStateOf(false) }
+
+                if (showSortDialog) {
+                    SortDialog(
+                        onDismiss = {
+                            showSortDialog = false
+                        },
+                        allNotes = allNotes,
+                        optionIndex = sortOptionIndex
+
+                    )
+                }
+
 
 
                 ButtonMoveExample(
@@ -306,16 +347,26 @@ fun TopPart(listIndex: MutableIntState) {
                     showSubMenu = showSubMenu,
                     setShowMenu = { newShowMenu ->
                         showSubMenu = newShowMenu
-                    })
+                    },
+                    onClick = {
+                        showSortDialog = true
+                    }
+                )
 
                 ButtonMoveExample(
                     x = -70,
                     y = 70,
-                    painter = R.drawable.select_icon,
+                    painter = R.drawable.rounded_info_24,
                     showSubMenu = showSubMenu,
                     setShowMenu = { newShowMenu ->
                         showSubMenu = newShowMenu
-                    })
+                    },
+                    onClick = {
+                        Toast.makeText(context, "Made by Asghar Hussain", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/YooAshu"))
+                        context.startActivity(intent)
+                    }
+                )
 
                 ButtonMoveExample(
                     y = 100,
@@ -323,7 +374,12 @@ fun TopPart(listIndex: MutableIntState) {
                     showSubMenu = showSubMenu,
                     setShowMenu = { newShowMenu ->
                         showSubMenu = newShowMenu
-                    })
+                    },
+                    onClick = {
+                        listIndex.intValue = 0
+                        navController.navigate(SearchPage)
+                    }
+                )
 
                 Button(
                     onClick = {
@@ -444,7 +500,7 @@ fun GreetingPreview() {
 object HomePage
 
 @Serializable
-object DoodlePage
+object SearchPage
 
 @Serializable
 data class EditNote(
@@ -458,7 +514,8 @@ fun ButtonMoveExample(
     y: Int = 0,
     painter: Int,
     showSubMenu: Boolean,
-    setShowMenu: (Boolean) -> Unit
+    setShowMenu: (Boolean) -> Unit,
+    onClick: () -> Unit
 ) {
     val xOffset by animateDpAsState(
         targetValue = if (showSubMenu) x.dp else 0.dp,
@@ -481,6 +538,7 @@ fun ButtonMoveExample(
             .alpha(visibility)
     ) {
         setShowMenu(!showSubMenu)
+        onClick()
     }
 }
 

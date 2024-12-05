@@ -21,7 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -29,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +52,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import coil3.compose.AsyncImage
 import com.example.notes.DoodleScreen
+import com.example.notes.Note
 import com.github.skydoves.colorpicker.compose.AlphaTile
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
@@ -173,34 +177,39 @@ fun ColorPickerDialog(
         },
         modifier = Modifier
             .background(Color(0xFF272727), shape = RoundedCornerShape(20.dp))
-            .padding(16.dp)
 
     ) {
         Column {
+            AlphaTile(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(30.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .clip(RoundedCornerShape(20.dp, 20.dp, 0.dp, 0.dp)),
+                controller = controller
+            )
             Text(
-                text = "Color Picker", fontWeight = FontWeight.Bold, modifier = Modifier.align(
-                    Alignment.CenterHorizontally
-                )
+                text = "Color Picker", fontWeight = FontWeight.Bold, modifier = Modifier
+                    .align(
+                        Alignment.CenterHorizontally
+                    )
+                    .padding(10.dp)
             )
             HsvColorPicker(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(350.dp)
-                    .padding(10.dp),
+                    .height(300.dp)
+                    .padding(20.dp),
                 controller = controller,
                 onColorChanged = { colorEnvelope: ColorEnvelope ->
                     color = colorEnvelope.color
                 }
             )
-            AlphaTile(
-                modifier = Modifier
-                    .size(80.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .clip(RoundedCornerShape(6.dp)),
-                controller = controller
-            )
+
             Button(
-                modifier = Modifier.align(Alignment.End),
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(20.dp),
                 onClick = {
                     state.addSpanStyle(SpanStyle(color = color))
                     onDismiss()
@@ -364,7 +373,7 @@ fun DoodleDialog(
 @Composable
 fun NoteLongClickDialog(
     onDismiss: () -> Unit,
-    deleteDialogShown : MutableState<Boolean>
+    deleteDialogShown: MutableState<Boolean>
 ) {
 
     BasicAlertDialog(
@@ -376,15 +385,20 @@ fun NoteLongClickDialog(
     {
         Column {
             Box(
-                modifier = Modifier.padding(20.dp).height(50.dp).fillMaxWidth()
+                modifier = Modifier
+                    .padding(20.dp)
+                    .height(50.dp)
+                    .fillMaxWidth()
                     .clickable {
                         deleteDialogShown.value = true
                         onDismiss()
                     },
                 contentAlignment = Alignment.CenterStart
-            ){
-                Text(text = "Delete?",
-                    modifier = Modifier
+            ) {
+                Text(
+                    text = "Delete?",
+                    modifier = Modifier,
+                    color = Color.White
 
                 )
             }
@@ -402,12 +416,13 @@ fun NoteDeleteDialog(
 ) {
     BasicAlertDialog(
         onDismissRequest = { onDismiss() },
-        modifier = Modifier.background(Color(0xFF272727), shape = RoundedCornerShape(30.dp))
+        modifier = Modifier
+            .background(Color(0xFF272727), shape = RoundedCornerShape(30.dp))
             .padding(20.dp),
     )
     {
         Column(modifier = Modifier) {
-            Text(text = "Delete this note?")
+            Text(text = "Delete this note?", color = Color.White)
             Spacer(modifier = Modifier.height(30.dp))
             Row(
                 modifier = Modifier
@@ -440,7 +455,7 @@ fun NoteDeleteDialog(
                 ) {
                     Text(
                         text = "Delete",
-                        color = MaterialTheme.colorScheme.primary,
+                        color = Color(0xFFECE3C1),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
@@ -450,3 +465,109 @@ fun NoteDeleteDialog(
 
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SortDialog(
+    onDismiss: () -> Unit,
+    allNotes: MutableState<List<Note>>,
+    optionIndex: MutableIntState
+) {
+    BasicAlertDialog(
+        onDismissRequest = { onDismiss() },
+        modifier = Modifier
+            .background(Color(0xFF272727), shape = RoundedCornerShape(30.dp))
+            .padding(20.dp),
+    ) {
+
+        Column {
+            Box(
+                modifier = Modifier
+                    .height(70.dp)
+                    .fillMaxWidth()
+                    .clickable {
+                        allNotes.value = allNotes.value.sortedByDescending { it.dateModified }
+                        optionIndex.intValue = 0
+                        onDismiss()
+                    },
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Sort By Latest Modified First",
+                    modifier = Modifier,
+                    color = if (optionIndex.intValue == 0) Color(0xFFECE3C1) else Color.White
+                )
+            }
+            HorizontalDivider(
+                color = Color.White.copy(alpha = .5f),
+                thickness = 1.dp,
+                modifier = Modifier
+            )
+            Box(
+                modifier = Modifier
+                    .height(70.dp)
+                    .fillMaxWidth()
+                    .clickable {
+                        allNotes.value = allNotes.value.sortedBy { it.dateModified }
+                        optionIndex.intValue = 1
+                        onDismiss()
+                    },
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Sort By Latest Modified Last",
+                    modifier = Modifier,
+                    color = if (optionIndex.intValue == 1) Color(0xFFECE3C1) else Color.White
+                )
+            }
+            HorizontalDivider(
+                color = Color.White.copy(alpha = .5f),
+                thickness = 1.dp,
+                modifier = Modifier
+            )
+            Box(
+                modifier = Modifier
+                    .height(70.dp)
+                    .fillMaxWidth()
+                    .clickable {
+                        allNotes.value = allNotes.value.sortedByDescending { it.dateCreated }
+                        optionIndex.intValue = 2
+                        onDismiss()
+                    },
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Sort By Newest Added First ",
+                    modifier = Modifier,
+                    color = if (optionIndex.intValue == 2) Color(0xFFECE3C1) else Color.White
+                )
+            }
+            HorizontalDivider(
+                color = Color.White.copy(alpha = .5f),
+                thickness = 1.dp,
+                modifier = Modifier
+            )
+            Box(
+                modifier = Modifier
+                    .height(70.dp)
+                    .fillMaxWidth()
+                    .clickable {
+                        allNotes.value = allNotes.value.sortedBy { it.dateCreated }
+                        optionIndex.intValue = 3
+                        onDismiss()
+                    },
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Sort By Oldest Added First",
+                    modifier = Modifier,
+                    color = if (optionIndex.intValue == 3) Color(0xFFECE3C1) else Color.White
+                )
+            }
+        }
+
+    }
+
+
+}
+

@@ -3,6 +3,7 @@ package com.example.notes
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,7 +65,6 @@ import dev.chrisbanes.haze.hazeChild
 import io.ak1.drawbox.DrawBoxPayLoad
 import kotlin.math.ceil
 
-var isGradient: Int = 0
 var imageIndex: Int = 0
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -91,6 +91,7 @@ fun EditNote(
     var path: MutableState<DrawBoxPayLoad>;
     var dateCreated : Long;
     var dateModified : Long;
+    var themeIndex : MutableState<Int>;
     if (position == -1) {
         allNotesPosition = -1
         textFieldTitleState = remember { mutableStateOf("") }
@@ -101,6 +102,7 @@ fun EditNote(
         path = remember { mutableStateOf(DrawBoxPayLoad(Color.White, emptyList())) }
         dateCreated = System.currentTimeMillis()
         dateModified = System.currentTimeMillis()
+        themeIndex = remember { mutableIntStateOf(0) };
     } else {
         allNotesPosition = allNotes.value.indexOf(notes[position])
         textFieldTitleState = remember { mutableStateOf(allNotes.value[allNotesPosition].title) }
@@ -113,12 +115,11 @@ fun EditNote(
         path = remember { mutableStateOf(allNotes.value[allNotesPosition].doodlePath) }
         dateCreated = allNotes.value[allNotesPosition].dateCreated
         dateModified = allNotes.value[allNotesPosition].dateModified
+        themeIndex = remember { mutableStateOf(allNotes.value[allNotesPosition].themesIndex) }
 
     }
 
     var richTextDescState =rememberRichTextState()
-
-
 
 
     if (richTextDescState.currentSpanStyle.fontSize.value.isNaN()) {
@@ -158,7 +159,7 @@ fun EditNote(
             modifier = Modifier
                 .fillMaxSize()
                 .conditionalBackground(
-                    isGradient = isGradient,
+                    isGradient = themeIndex.value,
                     bgColor.value,
                     bgGradient.value,
                     0
@@ -177,7 +178,7 @@ fun EditNote(
                     .fillMaxSize()
                     .haze(
                         state = hazeState,
-                        backgroundColor = if (isGradient == 0) bgColor.value else bgGradient.value[1],
+                        backgroundColor = if (themeIndex.value == 0) bgColor.value else bgGradient.value[1],
                         tint = Color.Black.copy(alpha = .1f),
                         blurRadius = 10.dp,
                     ),
@@ -348,7 +349,8 @@ fun EditNote(
                 bg = bgColor,
                 bgGradient = bgGradient,
                 selectedImages = imageUriList,
-                path = path
+                path = path,
+                themeIndex = themeIndex
             )
 
             Text(dateCreated.toTimeDateString(),
@@ -373,7 +375,7 @@ fun EditNote(
                     bg = bgColor.value,
                     bgGradient = bgGradient.value,
                     category = selectedIndex.intValue,
-                    themesIndex = isGradient,
+                    themesIndex = themeIndex.value,
                     imageList = imageUriList.value.map { uri-> uri.toString() },
                     doodlePath = path.value,
                     html = richTextDescState.toHtml(),
