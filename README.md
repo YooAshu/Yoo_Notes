@@ -1,6 +1,6 @@
 # Yoo Notes - README
 
-Download the APK file from [https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0.0/YooNotes.apk](https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0.0/YooNotes.apk).
+Download the APK file from [https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0/Yoo.Notes.apk](https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0/Yoo.Notes.apk).
 
 ## Overview
 Welcome to Yoo Notes, your go-to Android application for managing notes efficiently and effectively. Whether you're jotting down ideas, creating to-do lists, or keeping track of important information, Yoo Notes provides a sleek and user-friendly platform. Built with Kotlin and Jetpack Compose, Yoo Notes ensures a smooth and enjoyable experience for all your note-taking needs.
@@ -22,17 +22,18 @@ Welcome to Yoo Notes, your go-to Android application for managing notes efficien
 ## Screenshots
 Here are some screenshots showcasing the features and design of Yoo Notes:
 
-![Screenshot 1](https://github.com/user-attachments/assets/4da7a7b9-e6df-4524-8bb3-65bd8297be89)  
+![Screenshot 2024-12-05 183815](https://github.com/user-attachments/assets/e37ad6ab-5c7b-4a89-a395-e9051dbc6456)
 <img src="https://github.com/user-attachments/assets/8d4d1543-97a8-402b-bae0-5d3c869039fc" alt="Screenshot 1" style="width: 150px; height: auto;">
 <img src="https://github.com/user-attachments/assets/12eb1404-2618-4e0f-aba2-57f07d727e77" alt="Screenshot 1" style="width: 150px; height: auto;">
 <img src="https://github.com/user-attachments/assets/02067016-c76e-4282-b919-280e0a3728553" alt="Screenshot 1" style="width: 150px; height: auto;">
 <img src="https://github.com/user-attachments/assets/a75a4fef-aa77-4667-a44a-1dfb905d1b12" alt="Screenshot 1" style="width: 150px; height: auto;">
 
 
+
 ## Installation
 
 To install Yoo Notes, follow these steps:
-1. Download the APK file from [https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0.0/YooNotes.apk](https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0.0/YooNotes.apk).
+1. Download the APK file from [https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0/Yoo.Notes.apk](https://github.com/YooAshu/Yoo_Notes/releases/download/v1.0/Yoo.Notes.apk).
 2. Open the APK file on your Android device.
 3. Follow the on-screen instructions to install the app.
 
