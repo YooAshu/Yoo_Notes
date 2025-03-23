@@ -49,3 +49,4 @@ Your feedback matters! If you encounter any issues or have ideas to enhance Yoo 
 ## Credits
 Yoo Notes was developed by Asghar Hussain.
 used rich text editor library by Mohammad Rejeb [github repo compose-rich-editor](https://github.com/MohamedRejeb/compose-rich-editor)
+
